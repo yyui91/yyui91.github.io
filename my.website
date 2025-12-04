@@ -1,0 +1,318 @@
+<!-- Random Math Problem Generator
+     Single-file HTML (HTML + CSS + JS)
+     Features:
+     - choose operation (Add, Sub, Mul, Div, Mixed)
+     - choose difficulty (Easy/Med/Hard)
+     - choose number of problems
+     - Generate problems, show/hide answers
+     - Immediate answer checking, scoring
+     - Optional timer mode
+     - Responsive, printable
+-->
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>隨機數學題目產生器</title>
+  <meta name="description" content="期末個人網站範例：隨機數學題目產生器（HTML/CSS/JS）" />
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#60a5fa; --success:#34d399; --danger:#fb7185;
+      --glass: rgba(255,255,255,0.03);
+      font-family: Inter, Roboto, "Noto Sans TC", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:linear-gradient(180deg,#071029 0%, #081226 100%); color:#e6eef6; min-height:100vh; padding:28px;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    .container{max-width:980px;margin:0 auto}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    header h1{font-size:20px;margin:0}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:320px 1fr;gap:18px}
+    @media (max-width:840px){.grid{grid-template-columns:1fr}}
+
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 22px rgba(2,6,23,0.6)}
+    .controls label{display:block;color:var(--muted);font-size:13px;margin-bottom:8px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    select,input[type=number]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit}
+    button{cursor:pointer;padding:10px 12px;border-radius:9px;border:0;background:linear-gradient(90deg,var(--accent),#3b82f6);color:#042033;font-weight:600}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+    .problems{display:flex;flex-direction:column;gap:12px}
+    .problem{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+    .left{display:flex;gap:12px;align-items:center}
+    .qnum{background:rgba(255,255,255,0.03);padding:8px;border-radius:8px;min-width:42px;text-align:center;font-weight:700}
+    .expression{font-size:18px}
+    .actions{display:flex;gap:8px;align-items:center}
+    .answer{min-width:86px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:#021024}
+    input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+
+    .meta{display:flex;gap:12px;align-items:center;margin-top:10px;color:var(--muted);font-size:13px}
+    .chip{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px}
+
+    .result.good{color:var(--success);font-weight:700}
+    .result.bad{color:var(--danger);font-weight:700}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* small print for printing */
+    @media print{button, .no-print{display:none} body{background:white;color:black} .card{box-shadow:none;border:1px solid #ddd}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>隨機數學題目產生器</h1>
+        <p>老師喜歡的期末個人專案：前端 + 小遊戲化練習</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- left: controls -->
+      <aside class="card controls">
+        <label>題型</label>
+        <div class="row" style="margin-bottom:12px">
+          <select id="operation">
+            <option value="mixed">混合 (隨機)</option>
+            <option value="add">加法 +</option>
+            <option value="sub">減法 -</option>
+            <option value="mul">乘法 ×</option>
+            <option value="div">除法 ÷</option>
+            <option value="linear">一元一次方程</option>
+            <option value="quad">一元二次方程</option>
+          </select>
+        </div>
+
+        <label>難度</label>
+        <div style="margin-bottom:12px">
+          <select id="difficulty">
+            <option value="easy">簡單（數字 1–10）</option>
+            <option value="medium">中等（數字 1–50）</option>
+            <option value="hard">困難（數字 1–200）</option>
+          </select>
+        </div>
+
+        <label>題數</label>
+        <div style="margin-bottom:12px">
+          <input id="count" type="number" min="1" max="50" value="10" />
+        </div>
+
+        <label>模式</label>
+        <div class="row" style="margin-bottom:12px">
+          <button id="generate">產生題目</button>
+          <button id="toggleAnswers" class="ghost">顯示答案</button>
+        </div>
+
+        <label>計時器（選用）</label>
+        <div class="row" style="margin-bottom:12px;align-items:center">
+          <input id="timerCheckbox" type="checkbox" /> <span style="margin-left:8px;color:var(--muted)">啟用倒數</span>
+        </div>
+        <div class="row" style="margin-bottom:12px">
+          <input id="timerSeconds" type="number" min="10" value="60" style="width:120px" /> <span style="align-self:center;color:var(--muted);font-size:13px">秒</span>
+        </div>
+
+        <div class="meta">
+          <div class="chip">得分：<span id="score">0</span></div>
+          <div class="chip">答對/總數：<span id="correct">0</span>/<span id="total">0</span></div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button id="startTimer" class="ghost">開始計時</button>
+          <button id="clear" class="ghost">清除</button>
+        </div>
+
+        <p style="margin-top:14px;color:var(--muted);font-size:13px">此單頁示範使用純前端（HTML/CSS/JS）。你可以把這個檔案直接交作業或上傳到 GitHub Pages。</p>
+      </aside>
+
+      <!-- right: problems -->
+      <main>
+        <section class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h2 style="margin:0;font-size:16px">題目區</h2>
+            <div style="color:var(--muted);font-size:13px">按下「產生題目」開始</div>
+          </div>
+
+          <div id="problems" class="problems">
+            <!-- generated problems go here -->
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <button id="checkAll">檢查所有答案</button>
+            <button id="revealAll" class="ghost">全部顯示答案</button>
+            <button id="print" class="ghost">列印（Print）</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      建議把此檔案存成 <code>index.html</code>，直接用瀏覽器開啟或部署到 GitHub Pages。
+    </footer>
+  </div>
+
+  <script>
+    // Utility: random integer in [min, max]
+    function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min }
+
+    // Get difficulty ranges
+    function getRange(diff){
+      if(diff === 'easy') return {min:1,max:10}
+      if(diff === 'medium') return {min:1,max:50}
+      return {min:1,max:200}
+    }
+
+    // Generate single problem object
+    function makeProblem(operation, difficulty){
+      if(operation === 'mixed'){
+        const ops = ['add','sub','mul','div','linear','quad'];
+        operation = ops[randInt(0, ops.length-1)];
+      }
+      const range = getRange(difficulty);
+      let a = randInt(range {expr, answer, operation}
+    }
+
+    // State
+    let state = {problems:[], score:0, correct:0, total:0, timer:null, timeLeft:0}
+
+    // DOM refs
+    const el = id => document.getElementById(id);
+    const problemsEl = el('problems');
+    const scoreEl = el('score');
+    const correctEl = el('correct');
+    const totalEl = el('total');
+
+    function renderProblems(){
+      problemsEl.innerHTML = '';
+      state.problems.forEach((p, idx)=>{
+        const div = document.createElement('div'); div.className='problem';
+        div.innerHTML = `
+          <div class="left">
+            <div class="qnum">${idx+1}</div>
+            <div>
+              <div class="expression">${p.expr}</div>
+              <div style="color:var(--muted);font-size:13px">運算：${p.operation}</div>
+            </div>
+          </div>
+          <div class="actions">
+            <input data-idx="${idx}" class="userAnswer" type="text" placeholder="輸入答案" />
+            <div class="answer" data-ans="${p.answer}" style="display:none">${p.answer}</div>
+            <div class="result" data-result></div>
+          </div>
+        `;
+        problemsEl.appendChild(div);
+      })
+      // update totals
+      totalEl.textContent = state.problems.length;
+      correctEl.textContent = state.correct;
+      scoreEl.textContent = state.score;
+    }
+
+    // Generate N problems
+    function generate(){
+      const op = el('operation').value;
+      const diff = el('difficulty').value;
+      let count = parseInt(el('count').value) || 10; if(count < 1) count = 1; if(count > 100) count = 100;
+      state.problems = [];
+      state.score = 0; state.correct = 0;
+      for(let i=0;i<count;i++) state.problems.push(makeProblem(op, diff));
+      renderProblems();
+    }
+
+    // Check single answer (string comparison tolerant)
+    function checkAnswer(inputEl){
+      const idx = parseInt(inputEl.getAttribute('data-idx'));
+      const p = state.problems[idx];
+      const user = inputEl.value.trim();
+      const resultEl = inputEl.parentElement.querySelector('[data-result]');
+      const answerEl = inputEl.parentElement.querySelector('.answer');
+
+      if(user === ''){ resultEl.textContent=''; resultEl.className='result'; return false }
+
+      // compare allowing numeric tolerance for floats
+      const userNum = Number(user.replace(',', '.'));
+      const correctNum = Number(p.answer);
+      const isCorrect = !isNaN(userNum) && Math.abs(userNum - correctNum) < 0.01;
+
+      if(isCorrect){ resultEl.textContent='✔ 正確'; resultEl.className='result good';
+        // avoid double counting: mark input as checked
+        if(!inputEl.dataset.checked){ state.correct += 1; state.score += 10; inputEl.dataset.checked='true'; }
+      } else { resultEl.textContent='✘ 錯誤'; resultEl.className='result bad'; if(!inputEl.dataset.checkedWrong){ inputEl.dataset.checkedWrong='true'; }
+        // if previously marked correct but changed, remove points (simple handling)
+        if(inputEl.dataset.checked==='true' && !isCorrect){ inputEl.dataset.checked=''; state.correct = Math.max(0, state.correct - 1); state.score = Math.max(0, state.score - 10); }
+      }
+      scoreEl.textContent = state.score; correctEl.textContent = state.correct;
+      return isCorrect;
+    }
+
+    // Check all
+    function checkAll(){
+      const inputs = document.querySelectorAll('.userAnswer');
+      inputs.forEach(inp => checkAnswer(inp));
+    }
+
+    // Reveal all answers
+    function revealAll(show=true){
+      document.querySelectorAll('.problem').forEach(div=>{
+        const ans = div.querySelector('.answer');
+        if(ans) ans.style.display = show ? 'block' : 'none';
+      })
+    }
+
+    // Toggle answers button
+    el('toggleAnswers').addEventListener('click', ()=>{
+      const txt = el('toggleAnswers').textContent;
+      if(txt.includes('顯示')){ revealAll(true); el('toggleAnswers').textContent='隱藏答案'; }
+      else { revealAll(false); el('toggleAnswers').textContent='顯示答案'; }
+    })
+
+    // Generate btn
+    el('generate').addEventListener('click', ()=>{
+      generate();
+    })
+
+    // Listen to typed answers (debounced)
+    let typingTimer;
+    document.addEventListener('input', e=>{
+      if(e.target && e.target.classList && e.target.classList.contains('userAnswer')){
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(()=> checkAnswer(e.target), 400);
+      }
+    })
+
+    // Check all btn
+    el('checkAll').addEventListener('click', ()=> checkAll());
+    el('revealAll').addEventListener('click', ()=> revealAll(true));
+    el('print').addEventListener('click', ()=> window.print());
+    el('clear').addEventListener('click', ()=>{
+      state.problems = []; state.score=0; state.correct=0; renderProblems();
+    })
+
+    // Timer
+    el('startTimer').addEventListener('click', ()=>{
+      const enabled = el('timerCheckbox').checked; if(!enabled) return alert('請先勾選啟用倒數');
+      const secs = parseInt(el('timerSeconds').value) || 60; startTimer(secs);
+    })
+
+    function startTimer(seconds){
+      stopTimer();
+      state.timeLeft = seconds;
+      el('startTimer').textContent = '停止計時';
+      state.timer = setInterval(()=>{
+        state.timeLeft -= 1;
+        if(state.timeLeft <= 0){ stopTimer(); alert('時間到！自動檢查答案。'); checkAll(); }
+      },1000);
+    }
+    function stopTimer(){ if(state.timer){ clearInterval(state.timer); state.timer = null; el('startTimer').textContent = '開始計時'; }}
+
+    // Init: generate default set
+    generate();
+  </script>
+</body>
+</html>
