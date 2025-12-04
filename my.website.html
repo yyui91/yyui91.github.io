@@ -70,7 +70,6 @@
     <header>
       <div>
         <h1>隨機數學題目產生器</h1>
-        <p>老師喜歡的期末個人專案：前端 + 小遊戲化練習</p>
       </div>
     </header>
 
@@ -153,11 +152,17 @@
     </div>
 
     <footer>
-      建議把此檔案存成 <code>index.html</code>，直接用瀏覽器開啟或部署到 GitHub Pages。
+      
     </footer>
   </div>
 
   <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const genBtn = document.getElementById('generate');
+      const ansBtn = document.getElementById('toggleAnswers');
+      if(genBtn) genBtn.addEventListener('click', () => generate());
+      if(ansBtn) ansBtn.addEventListener('click', () => toggleAnswers());
+    });
     // Utility: random integer in [min, max]
     function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min }
 
@@ -175,7 +180,41 @@
         operation = ops[randInt(0, ops.length-1)];
       }
       const range = getRange(difficulty);
-      let a = randInt(range {expr, answer, operation}
+      let a = randInt(range.min, range.max);
+      let b = randInt(range.min, range.max);
+
+      let expr, answer;
+      if(operation === 'add'){
+        expr = `${a} + ${b}`; answer = a + b;
+      } else if(operation === 'sub'){
+        if(a < b) [a,b] = [b,a];
+        expr = `${a} - ${b}`; answer = a - b;
+      } else if(operation === 'mul'){
+        expr = `${a} × ${b}`; answer = a * b;
+      } else if(operation === 'div'){
+        b = Math.max(1, b);
+        expr = `${a} ÷ ${b}`; answer = +(a / b).toFixed(2);
+      } else if(operation === 'linear'){
+        // ax + b = c
+        const x = randInt(1, 20);
+        const A = randInt(1, 15);
+        const B = randInt(-20, 20);
+        const C = A * x + B;
+        expr = `${A}x + (${B}) = ${C}`;
+        answer = x;
+      } else if(operation === 'quad'){
+        // ax^2 + bx + c = 0 with integer root
+        const x = randInt(1, 15);
+        const r1 = randInt(-5, 5) || 1;
+        const r2 = randInt(-5, 5) || 2;
+        const A = randInt(1, 5);
+        const B = -A * (r1 + r2);
+        const C = A * (r1 * r2);
+        expr = `${A}x² + (${B})x + (${C}) = 0`;
+        answer = `x = ${r1}, ${r2}`;
+      }
+
+      return {expr, answer, operation} {expr, answer, operation}
     }
 
     // State
