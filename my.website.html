@@ -1,357 +1,522 @@
-<!-- Random Math Problem Generator
-     Single-file HTML (HTML + CSS + JS)
-     Features:
-     - choose operation (Add, Sub, Mul, Div, Mixed)
-     - choose difficulty (Easy/Med/Hard)
-     - choose number of problems
-     - Generate problems, show/hide answers
-     - Immediate answer checking, scoring
-     - Optional timer mode
-     - Responsive, printable
--->
-
 <!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>隨機數學題目產生器</title>
-  <meta name="description" content="期末個人網站範例：隨機數學題目產生器（HTML/CSS/JS）" />
+  <title>高中數學題目產生器 — 指數/對數、三角、機率、數列</title>
   <style>
     :root{
-      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#60a5fa; --success:#34d399; --danger:#fb7185;
-      --glass: rgba(255,255,255,0.03);
-      font-family: Inter, Roboto, "Noto Sans TC", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial;
+      --bg:#0b1220; --card:#0f1724; --muted:#9aa4b2; --accent:#60a5fa; --ok:#34d399; --err:#fb7185;
+      font-family: "Noto Sans TC", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; background:linear-gradient(180deg,#071029 0%, #081226 100%); color:#e6eef6; min-height:100vh; padding:28px;
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-    }
-
-    .container{max-width:980px;margin:0 auto}
-    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-    header h1{font-size:20px;margin:0}
-    header p{margin:0;color:var(--muted);font-size:13px}
-
-    .grid{display:grid;grid-template-columns:320px 1fr;gap:18px}
-    @media (max-width:840px){.grid{grid-template-columns:1fr}}
-
-    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 22px rgba(2,6,23,0.6)}
-    .controls label{display:block;color:var(--muted);font-size:13px;margin-bottom:8px}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    select,input[type=number]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit}
-    button{cursor:pointer;padding:10px 12px;border-radius:9px;border:0;background:linear-gradient(90deg,var(--accent),#3b82f6);color:#042033;font-weight:600}
+    body{margin:0;background:linear-gradient(180deg,#041022 0%, #071226 100%);color:#e6eef6;min-height:100vh;padding:28px}
+    .container{max-width:920px;margin:0 auto}
+    h1{margin:0 0 12px;font-size:20px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    select,input[type=number],button{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
+    button{cursor:pointer;background:linear-gradient(90deg,var(--accent),#3b82f6);border:0;color:#052033;font-weight:700}
     button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-
-    .problems{display:flex;flex-direction:column;gap:12px}
-    .problem{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
-    .left{display:flex;gap:12px;align-items:center}
-    .qnum{background:rgba(255,255,255,0.03);padding:8px;border-radius:8px;min-width:42px;text-align:center;font-weight:700}
-    .expression{font-size:18px}
-    .actions{display:flex;gap:8px;align-items:center}
-    .answer{min-width:86px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:#021024}
-    input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
-
-    .meta{display:flex;gap:12px;align-items:center;margin-top:10px;color:var(--muted);font-size:13px}
-    .chip{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px}
-
-    .result.good{color:var(--success);font-weight:700}
-    .result.bad{color:var(--danger);font-weight:700}
-
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 22px rgba(2,6,23,0.6)}
+    #problemArea{margin-top:16px;min-height:180px;display:flex;flex-direction:column;gap:12px}
+    .problemCard{padding:16px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+    .title{font-size:14px;color:var(--muted);margin-bottom:8px}
+    .expr{font-size:20px;font-weight:700;margin-bottom:8px}
+    .hint{color:var(--muted);font-size:13px;margin-bottom:8px}
+    .feedback{margin-top:8px;font-weight:700}
+    .feedback.ok{color:var(--ok)}
+    .feedback.bad{color:var(--err)}
+    .stats{margin-top:12px;color:var(--muted);font-size:14px;display:flex;gap:12px;align-items:center}
+    .small{font-size:13px;color:var(--muted)}
     footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
-
-    /* small print for printing */
-    @media print{button, .no-print{display:none} body{background:white;color:black} .card{box-shadow:none;border:1px solid #ddd}}
+    @media (max-width:700px){ .top{flex-direction:column;align-items:flex-start} }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
+    <div class="top">
       <div>
-        <h1>隨機數學題目產生器</h1>
+        <h1>高中數學題目產生器</h1>
+        <div class="small">題型：指數/對數、三角、機率、數列 — 題目前會說明要做什麼（例：求 x、求第 n 項、求機率）</div>
       </div>
-    </header>
 
-    <div class="grid">
-      <!-- left: controls -->
-      <aside class="card controls">
-        <label>題型</label>
-        <div class="row" style="margin-bottom:12px">
+      <div class="controls">
+        <label>
+          題型：
           <select id="operation">
-            <option value="mixed">混合 (隨機)</option>
-            <option value="add">加法 +</option>
-            <option value="sub">減法 -</option>
-            <option value="mul">乘法 ×</option>
-            <option value="div">除法 ÷</option>
-            <option value="linear">一元一次方程</option>
-            <option value="quad">一元二次方程</option>
+            <option value="mixed">混合（隨機）</option>
+            <option value="exp">指數 / 對數（求 x 或 求值）</option>
+            <option value="trig">三角函數（求值，常見角）</option>
+            <option value="prob">機率（基本事件）</option>
+            <option value="seq">數列（求第 n 項 / 和）</option>
           </select>
-        </div>
+        </label>
 
-        <label>難度</label>
-        <div style="margin-bottom:12px">
+        <label>
+          難度：
           <select id="difficulty">
-            <option value="easy">簡單（數字 1–10）</option>
-            <option value="medium">中等（數字 1–50）</option>
-            <option value="hard">困難（數字 1–200）</option>
+            <option value="easy">簡單</option>
+            <option value="medium" selected>中等</option>
+            <option value="hard">困難</option>
           </select>
-        </div>
+        </label>
 
-        <label>題數</label>
-        <div style="margin-bottom:12px">
+        <label>
+          題數：
           <input id="count" type="number" min="1" max="50" value="10" />
-        </div>
+        </label>
 
-        <label>模式</label>
-        <div class="row" style="margin-bottom:12px">
-          <button id="generate">產生題目</button>
-          <button id="toggleAnswers" class="ghost">顯示答案</button>
-        </div>
-
-        <label>計時器（選用）</label>
-        <div class="row" style="margin-bottom:12px;align-items:center">
-          <input id="timerCheckbox" type="checkbox" /> <span style="margin-left:8px;color:var(--muted)">啟用倒數</span>
-        </div>
-        <div class="row" style="margin-bottom:12px">
-          <input id="timerSeconds" type="number" min="10" value="60" style="width:120px" /> <span style="align-self:center;color:var(--muted);font-size:13px">秒</span>
-        </div>
-
-        <div class="meta">
-          <div class="chip">得分：<span id="score">0</span></div>
-          <div class="chip">答對/總數：<span id="correct">0</span>/<span id="total">0</span></div>
-        </div>
-
-        <div style="margin-top:12px;display:flex;gap:8px">
-          <button id="startTimer" class="ghost">開始計時</button>
-          <button id="clear" class="ghost">清除</button>
-        </div>
-
-        <p style="margin-top:14px;color:var(--muted);font-size:13px">此單頁示範使用純前端（HTML/CSS/JS）。你可以把這個檔案直接交作業或上傳到 GitHub Pages。</p>
-      </aside>
-
-      <!-- right: problems -->
-      <main>
-        <section class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <h2 style="margin:0;font-size:16px">題目區</h2>
-            <div style="color:var(--muted);font-size:13px">按下「產生題目」開始</div>
-          </div>
-
-          <div id="problems" class="problems">
-            <!-- generated problems go here -->
-          </div>
-
-          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-            <button id="checkAll">檢查所有答案</button>
-            <button id="revealAll" class="ghost">全部顯示答案</button>
-            <button id="print" class="ghost">列印（Print）</button>
-          </div>
-        </section>
-      </main>
+        <button id="generateBtn">產生題目</button>
+        <button id="resetBtn" class="ghost">重置進度</button>
+      </div>
     </div>
 
-    <footer>
-      
-    </footer>
+    <div class="card">
+      <div id="problemArea">
+        <!-- 題目會顯示在這 -->
+        <div class="small">按「產生題目」開始。輸入答案後按 Enter 自動送出並跳下一題。</div>
+      </div>
+
+      <div class="stats">
+        <div>總題數：<span id="total">0</span></div>
+        <div>已作：<span id="done">0</span></div>
+        <div>答對：<span id="correct">0</span></div>
+        <div>正確率：<span id="rate">0%</span></div>
+      </div>
+    </div>
+
+    <footer>輸入答案時，數值答案接受小數或分數（例如 1/2）。三角值使用常用 exact 表示（例如 √3/2 或 sqrt(3)/2）。</footer>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const genBtn = document.getElementById('generate');
-      const ansBtn = document.getElementById('toggleAnswers');
-      if(genBtn) genBtn.addEventListener('click', () => generate());
-      if(ansBtn) ansBtn.addEventListener('click', () => toggleAnswers());
-    });
-    // Utility: random integer in [min, max]
-    function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min }
-
-    // Get difficulty ranges
-    function getRange(diff){
-      if(diff === 'easy') return {min:1,max:10}
-      if(diff === 'medium') return {min:1,max:50}
-      return {min:1,max:200}
+<script>
+/* ---------- 工具函式 ---------- */
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function gcd(a,b){ a=Math.abs(a);b=Math.abs(b); while(b){[a,b]=[b,a%b];} return a; }
+function toFracString(num){ // 無理想化，僅把簡單小數轉分數（若為整數或簡單分數）
+  if(Number.isInteger(num)) return String(num);
+  const eps = 1e-9;
+  for(let d=1; d<=100; d++){
+    let n = Math.round(num*d);
+    if(Math.abs(num - n/d) < eps) {
+      const g = gcd(n,d);
+      return `${n/g}/${d/g}`;
     }
+  }
+  return String(Number(num.toFixed(6)));
+}
+function normalizeInput(s){
+  if(!s) return s;
+  s = s.trim();
+  s = s.replace(/，/g, ',');
+  s = s.replace(/√/g, 'sqrt');
+  s = s.replace(/\s+/g, ''); // 移除空白
+  s = s.replace(/∕/g, '/');
+  return s;
+}
+/* 解析使用者輸入：支援整數、小數、分數、sqrt(...) */
+function parseAnswerString(s){
+  s = normalizeInput(s);
+  if(s==='') return null;
+  // 分數 a/b
+  if(s.includes('/')){
+    const parts = s.split('/');
+    if(parts.length===2){
+      const a = Number(parts[0]);
+      const b = Number(parts[1]);
+      if(!isNaN(a) && !isNaN(b) && b!==0) return a / b;
+    }
+    // 可能包含 sqrt： sqrt(3)/2
+    // 先嘗試 eval 替換 sqrt
+    try{
+      const expr = s.replace(/sqrt\(([-+0-9eE.]+)\)/g, (m, g1)=>`Math.sqrt(${g1})`);
+      const val = Function('"use strict";return ('+expr+')')();
+      if(typeof val === 'number' && !isNaN(val)) return val;
+    } catch(e){}
+    return null;
+  }
+  // sqrt(...) or numeric
+  if(s.startsWith('sqrt')){
+    try{
+      const expr = s.replace(/sqrt\(([-+0-9eE.]+)\)/g, (m, g1)=>`Math.sqrt(${g1})`);
+      const val = Function('"use strict";return ('+expr+')')();
+      if(typeof val === 'number' && !isNaN(val)) return val;
+    } catch(e){}
+    return null;
+  }
+  // numeric
+  const num = Number(s);
+  if(!isNaN(num)) return num;
+  return null;
+}
 
-    // Generate single problem object
-    function makeProblem(operation, difficulty){
-      if(operation === 'mixed'){
-        const ops = ['add','sub','mul','div','linear','quad'];
-        operation = ops[randInt(0, ops.length-1)];
+/* ---------- 題目產生器 ---------- */
+/* 依難度決定數值範圍 */
+function getRange(diff){
+  if(diff==='easy') return {min:1,max:8};
+  if(diff==='medium') return {min:2,max:12};
+  return {min:3,max:20};
+}
+
+/* 每種題型回傳一個物件 {title,instruction,expr,answer,checkFn} 
+   checkFn(userInputValue) -> boolean or {ok:boolean, msg:string}
+*/
+function makeProblem(type,difficulty){
+  const range = getRange(difficulty);
+  if(type==='mixed'){
+    const list = ['exp','trig','prob','seq'];
+    type = list[randInt(0,list.length-1)];
+  }
+
+  if(type==='exp'){
+    // 兩種形式： (1) 求 x： 2^x = 32  (整數解)  (2) 求值： 3^4 = ?
+    if(Math.random() < 0.5){
+      // 求 x（整數） a^x = b
+      const base = randInt(2,5);
+      const x = randInt(1,5);
+      const b = Math.pow(base,x);
+      return {
+        title:'【指數】求 x 的值',
+        instruction:`已知 ${base}^x = ${b}，請求出 x (整數)`,
+        expr:`${base}^x = ${b}`,
+        answer:x,
+        checkFn: (u)=> {
+          const v = parseAnswerString(u);
+          return v !== null && Math.abs(v - x) < 1e-9;
+        }
+      };
+    } else {
+      // 對數形式： log_b (b^k) = k 或 求值 log
+      const base = randInt(2,5);
+      const k = randInt(1,6);
+      const val = Math.pow(base,k);
+      return {
+        title:'【對數】求值或化簡',
+        instruction:`求：log_${base}(${val})（請直接輸入數值）`,
+        expr:`log_${base}(${val})`,
+        answer:k,
+        checkFn:(u)=> {
+          const v = parseAnswerString(u);
+          return v !== null && Math.abs(v - k) < 1e-9;
+        }
+      };
+    }
+  }
+
+  if(type==='trig'){
+    // 常見角的 exact 值： 30,45,60,0,90
+    const angles = [0,30,45,60,90,120,135,150,180];
+    const angle = angles[randInt(0,angles.length-1)];
+    const funcs = ['sin','cos','tan'];
+    const f = funcs[randInt(0,funcs.length-1)];
+    // compute exact value as number but also keep canonical string forms
+    const deg = angle;
+    function degToRad(d){ return d * Math.PI / 180; }
+    const val = (()=> {
+      const r = degToRad(deg);
+      if(f==='sin') return Math.sin(r);
+      if(f==='cos') return Math.cos(r);
+      return Math.tan(r);
+    })();
+    // Provide suggested exacts mapping for common angles (sin/cos)
+    const exactMap = {
+      'sin0': '0',
+      'cos0': '1',
+      'sin30': '1/2',
+      'cos30': '√3/2',
+      'sin45': '√2/2',
+      'cos45': '√2/2',
+      'sin60': '√3/2',
+      'cos60': '1/2',
+      'sin90': '1',
+      'cos90': '0',
+      'tan0': '0',
+      'tan30': '1/√3',
+      'tan45': '1',
+      'tan60': '√3',
+      'tan90': 'undefined',
+      'sin120':'√3/2',
+      'cos120':'-1/2',
+      'sin135':'√2/2',
+      'cos135':'-√2/2',
+      'sin150':'1/2',
+      'cos150':'-√3/2',
+      'sin180':'0',
+      'cos180':'-1'
+    };
+    const key = f + deg;
+    const exact = exactMap[key] || null;
+    return {
+      title:`【三角】求 ${f}(${deg}°) 的值`,
+      instruction: `請輸入 ${f}(${deg}°) 的值（使用常見 exact 表示，例如 1/2、√3/2、sqrt(3)/2）。若為無定義請輸入 undefined。`,
+      expr: `${f}(${deg}°)`,
+      answerExact: exact, // 可能為 null
+      answerNum: val,
+      checkFn:(u)=>{
+        u = normalizeInput(u);
+        if(u==='undefined' || u==='undef') return (f==='tan' && (deg%180===90));
+        // accept both exact forms and numeric close
+        if(exact){
+          // normalize exact: accept variants sqrt(3)/2, √3/2, etc.
+          const normalizedExact = exact.replace(/√/g,'sqrt').replace(/\s+/g,'');
+          const tryExact = u.replace(/√/g,'sqrt').replace(/\s+/g,'');
+          if(tryExact === normalizedExact) return true;
+        }
+        const parsed = parseAnswerString(u);
+        if(parsed===null) return false;
+        if(!isFinite(parsed)) return false;
+        return Math.abs(parsed - val) < 1e-6;
       }
-      const range = getRange(difficulty);
-      let a = randInt(range.min, range.max);
-      let b = randInt(range.min, range.max);
+    };
+  }
 
-      let expr, answer;
-      if(operation === 'add'){
-        expr = `${a} + ${b}`; answer = a + b;
-      } else if(operation === 'sub'){
-        if(a < b) [a,b] = [b,a];
-        expr = `${a} - ${b}`; answer = a - b;
-      } else if(operation === 'mul'){
-        expr = `${a} × ${b}`; answer = a * b;
-      } else if(operation === 'div'){
-        b = Math.max(1, b);
-        expr = `${a} ÷ ${b}`; answer = +(a / b).toFixed(2);
-      } else if(operation === 'linear'){
-        // ax + b = c
-        const x = randInt(1, 20);
-        const A = randInt(1, 15);
-        const B = randInt(-20, 20);
-        const C = A * x + B;
-        expr = `${A}x + (${B}) = ${C}`;
-        answer = x;
-      } else if(operation === 'quad'){
-        // ax^2 + bx + c = 0 with integer root
-        const x = randInt(1, 15);
-        const r1 = randInt(-5, 5) || 1;
-        const r2 = randInt(-5, 5) || 2;
-        const A = randInt(1, 5);
-        const B = -A * (r1 + r2);
-        const C = A * (r1 * r2);
-        expr = `${A}x² + (${B})x + (${C}) = 0`;
-        answer = `x = ${r1}, ${r2}`;
+  if(type==='prob'){
+    // 基本機率題：擲骰子、抽球（不放回）
+    if(Math.random() < 0.5){
+      // 骰子：求至少 / 恰好
+      const n = randInt(1,3); // 次數
+      const face = randInt(1,6);
+      const kind = Math.random() < 0.5 ? '至少一次' : '恰好一次';
+      // compute probability
+      const pSingle = 1/6;
+      let prob = 0;
+      if(kind==='至少一次'){
+        prob = 1 - Math.pow(1-pSingle, n);
+      } else {
+        // exactly once: C(n,1)*p*(1-p)^(n-1)
+        prob = n * pSingle * Math.pow(1-pSingle, n-1);
       }
-
-      return {expr, answer, operation} {expr, answer, operation}
+      return {
+        title:'【機率】基本事件計算',
+        instruction:`拋一個公平六面骰子 ${n} 次，求 ${kind} 出現點數 ${face} 的機率（以最簡分數或小數表示）`,
+        expr: `${kind} 出現 ${face} 的機率（${n} 次）`,
+        answer: prob,
+        checkFn:(u)=>{
+          const v = parseAnswerString(u);
+          if(v===null) return false;
+          return Math.abs(v - prob) < 1e-6 || Math.abs(v - Number(prob.toFixed(6)))<1e-6;
+        }
+      };
+    } else {
+      // 抽球：盒中有 red & blue，抽一球
+      const red = randInt(1,6);
+      const blue = randInt(1,6);
+      const total = red + blue;
+      const want = Math.random() < 0.5 ? '紅球' : '藍球';
+      const prob = (want==='紅球') ? (red/total) : (blue/total);
+      return {
+        title:'【機率】抽球（不放回）',
+        instruction:`盒中有 ${red} 個紅球與 ${blue} 個藍球，隨機抽一個球，求抽到 ${want} 的機率（以最簡分數或小數表示）`,
+        expr: `抽到 ${want} 的機率`,
+        answer: prob,
+        checkFn:(u)=>{
+          const v = parseAnswerString(u);
+          if(v===null) return false;
+          // accept either exact fraction or decimal
+          return Math.abs(v - prob) < 1e-9;
+        }
+      };
     }
+  }
 
-    // State
-    let state = {problems:[], score:0, correct:0, total:0, timer:null, timeLeft:0}
-
-    // DOM refs
-    const el = id => document.getElementById(id);
-    const problemsEl = el('problems');
-    const scoreEl = el('score');
-    const correctEl = el('correct');
-    const totalEl = el('total');
-
-    function renderProblems(){
-      problemsEl.innerHTML = '';
-      state.problems.forEach((p, idx)=>{
-        const div = document.createElement('div'); div.className='problem';
-        div.innerHTML = `
-          <div class="left">
-            <div class="qnum">${idx+1}</div>
-            <div>
-              <div class="expression">${p.expr}</div>
-              <div style="color:var(--muted);font-size:13px">運算：${p.operation}</div>
-            </div>
-          </div>
-          <div class="actions">
-            <input data-idx="${idx}" class="userAnswer" type="text" placeholder="輸入答案" />
-            <div class="answer" data-ans="${p.answer}" style="display:none">${p.answer}</div>
-            <div class="result" data-result></div>
-          </div>
-        `;
-        problemsEl.appendChild(div);
-      })
-      // update totals
-      totalEl.textContent = state.problems.length;
-      correctEl.textContent = state.correct;
-      scoreEl.textContent = state.score;
-    }
-
-    // Generate N problems
-    function generate(){
-      const op = el('operation').value;
-      const diff = el('difficulty').value;
-      let count = parseInt(el('count').value) || 10; if(count < 1) count = 1; if(count > 100) count = 100;
-      state.problems = [];
-      state.score = 0; state.correct = 0;
-      for(let i=0;i<count;i++) state.problems.push(makeProblem(op, diff));
-      renderProblems();
-    }
-
-    // Check single answer (string comparison tolerant)
-    function checkAnswer(inputEl){
-      const idx = parseInt(inputEl.getAttribute('data-idx'));
-      const p = state.problems[idx];
-      const user = inputEl.value.trim();
-      const resultEl = inputEl.parentElement.querySelector('[data-result]');
-      const answerEl = inputEl.parentElement.querySelector('.answer');
-
-      if(user === ''){ resultEl.textContent=''; resultEl.className='result'; return false }
-
-      // compare allowing numeric tolerance for floats
-      const userNum = Number(user.replace(',', '.'));
-      const correctNum = Number(p.answer);
-      const isCorrect = !isNaN(userNum) && Math.abs(userNum - correctNum) < 0.01;
-
-      if(isCorrect){ resultEl.textContent='✔ 正確'; resultEl.className='result good';
-        // avoid double counting: mark input as checked
-        if(!inputEl.dataset.checked){ state.correct += 1; state.score += 10; inputEl.dataset.checked='true'; }
-      } else { resultEl.textContent='✘ 錯誤'; resultEl.className='result bad'; if(!inputEl.dataset.checkedWrong){ inputEl.dataset.checkedWrong='true'; }
-        // if previously marked correct but changed, remove points (simple handling)
-        if(inputEl.dataset.checked==='true' && !isCorrect){ inputEl.dataset.checked=''; state.correct = Math.max(0, state.correct - 1); state.score = Math.max(0, state.score - 10); }
+  if(type==='seq'){
+    // 等差或等比，求第 n 項或前 n 項和
+    const kind = Math.random() < 0.5 ? 'arithmetic' : 'geometric';
+    if(kind==='arithmetic'){
+      const a1 = randInt(1,10);
+      const d = randInt(1,6);
+      const n = randInt(3,8);
+      const an = a1 + (n-1)*d;
+      const sum = (n*(a1 + an))/2;
+      const ask = Math.random() < 0.5 ? 'term' : 'sum';
+      if(ask==='term'){
+        return {
+          title:'【數列（等差）】求第 n 項',
+          instruction:`已知等差數列首項 a₁ = ${a1}，公差 d = ${d}，請求第 ${n} 項 a_${n}`,
+          expr:`a_${n} = ?`,
+          answer: an,
+          checkFn:(u)=> {
+            const v = parseAnswerString(u); return v!==null && Math.abs(v - an) < 1e-9;
+          }
+        };
+      } else {
+        return {
+          title:'【數列（等差）】求前 n 項和',
+          instruction:`已知等差數列首項 a₁ = ${a1}，公差 d = ${d}，請求前 ${n} 項和 S_${n}`,
+          expr:`S_${n} = ?`,
+          answer: sum,
+          checkFn:(u)=> {
+            const v = parseAnswerString(u); return v!==null && Math.abs(v - sum) < 1e-9;
+          }
+        };
       }
-      scoreEl.textContent = state.score; correctEl.textContent = state.correct;
-      return isCorrect;
-    }
-
-    // Check all
-    function checkAll(){
-      const inputs = document.querySelectorAll('.userAnswer');
-      inputs.forEach(inp => checkAnswer(inp));
-    }
-
-    // Reveal all answers
-    function revealAll(show=true){
-      document.querySelectorAll('.problem').forEach(div=>{
-        const ans = div.querySelector('.answer');
-        if(ans) ans.style.display = show ? 'block' : 'none';
-      })
-    }
-
-    // Toggle answers button
-    el('toggleAnswers').addEventListener('click', ()=>{
-      const txt = el('toggleAnswers').textContent;
-      if(txt.includes('顯示')){ revealAll(true); el('toggleAnswers').textContent='隱藏答案'; }
-      else { revealAll(false); el('toggleAnswers').textContent='顯示答案'; }
-    })
-
-    // Generate btn
-    el('generate').addEventListener('click', ()=>{
-      generate();
-    })
-
-    // Listen to typed answers (debounced)
-    let typingTimer;
-    document.addEventListener('input', e=>{
-      if(e.target && e.target.classList && e.target.classList.contains('userAnswer')){
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(()=> checkAnswer(e.target), 400);
+    } else {
+      const a1 = randInt(1,6);
+      const r = randInt(2,5);
+      const n = randInt(3,6);
+      const an = a1 * Math.pow(r, n-1);
+      const ask = Math.random() < 0.6 ? 'term' : 'sum';
+      if(ask==='term'){
+        return {
+          title:'【數列（等比）】求第 n 項',
+          instruction:`已知等比數列首項 a₁ = ${a1}，公比 r = ${r}，請求第 ${n} 項 a_${n}`,
+          expr:`a_${n} = ?`,
+          answer: an,
+          checkFn:(u)=> {
+            const v = parseAnswerString(u); return v!==null && Math.abs(v - an) < 1e-9;
+          }
+        };
+      } else {
+        // 前 n 項和（有限）
+        const sum = a1 * (Math.pow(r,n)-1)/(r-1);
+        return {
+          title:'【數列（等比）】求前 n 項和',
+          instruction:`已知等比數列首項 a₁ = ${a1}，公比 r = ${r}，請求前 ${n} 項和 S_${n}`,
+          expr:`S_${n} = ?`,
+          answer: sum,
+          checkFn:(u)=> {
+            const v = parseAnswerString(u); return v!==null && Math.abs(v - sum) < 1e-6;
+          }
+        };
       }
-    })
-
-    // Check all btn
-    el('checkAll').addEventListener('click', ()=> checkAll());
-    el('revealAll').addEventListener('click', ()=> revealAll(true));
-    el('print').addEventListener('click', ()=> window.print());
-    el('clear').addEventListener('click', ()=>{
-      state.problems = []; state.score=0; state.correct=0; renderProblems();
-    })
-
-    // Timer
-    el('startTimer').addEventListener('click', ()=>{
-      const enabled = el('timerCheckbox').checked; if(!enabled) return alert('請先勾選啟用倒數');
-      const secs = parseInt(el('timerSeconds').value) || 60; startTimer(secs);
-    })
-
-    function startTimer(seconds){
-      stopTimer();
-      state.timeLeft = seconds;
-      el('startTimer').textContent = '停止計時';
-      state.timer = setInterval(()=>{
-        state.timeLeft -= 1;
-        if(state.timeLeft <= 0){ stopTimer(); alert('時間到！自動檢查答案。'); checkAll(); }
-      },1000);
     }
-    function stopTimer(){ if(state.timer){ clearInterval(state.timer); state.timer = null; el('startTimer').textContent = '開始計時'; }}
+  }
 
-    // Init: generate default set
-    generate();
-  </script>
+  // fallback (should not reach)
+  return {
+    title:'【題型】',
+    instruction:'無題型',
+    expr:'---',
+    answer:null,
+    checkFn:()=>false
+  };
+}
+
+/* ---------- 流程與 UI ---------- */
+let problems = [];
+let idx = 0;
+let stats = {total:0, done:0, correct:0};
+
+function renderCurrent(){
+  const area = document.getElementById('problemArea');
+  area.innerHTML = '';
+  if(problems.length===0){
+    area.innerHTML = '<div class="small">請按「產生題目」開始。</div>';
+    updateStats();
+    return;
+  }
+  const p = problems[idx];
+  const card = document.createElement('div');
+  card.className = 'problemCard';
+  card.innerHTML = `
+    <div class="title">${p.title}</div>
+    <div class="expr">${p.expr}</div>
+    <div class="hint">${p.instruction}</div>
+    <input id="userAnswer" placeholder="輸入答案後按 Enter（支援小數、分數、sqrt()）" autocomplete="off" />
+    <div id="fb" class="feedback" style="display:none"></div>
+  `;
+  area.appendChild(card);
+  const input = document.getElementById('userAnswer');
+  input.focus();
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      submitAnswer();
+    }
+  });
+}
+
+function submitAnswer(){
+  const p = problems[idx];
+  const input = document.getElementById('userAnswer');
+  const fb = document.getElementById('fb');
+  if(!input) return;
+  const raw = input.value;
+  const result = p.checkFn(raw);
+  let ok = false;
+  if(typeof result === 'boolean') ok = result;
+  else if(result && typeof result === 'object' && 'ok' in result) ok = result.ok;
+  // 顯示回饋
+  fb.style.display = 'block';
+  if(ok){
+    fb.textContent = '✔ 正確';
+    fb.className = 'feedback ok';
+    stats.correct++;
+  } else {
+    // 若題目有可顯示的正確表達（exact 或 answer），顯示它
+    let trueAns = '';
+    if(p.answer !== undefined && p.answer !== null) trueAns = String(p.answer);
+    if(p.answerExact) trueAns = p.answerExact;
+    if(trueAns) fb.textContent = '✘ 錯誤，正確答案：' + trueAns;
+    else fb.textContent = '✘ 錯誤';
+    fb.className = 'feedback bad';
+  }
+  stats.done++;
+  updateStats();
+  // 短暫停 600ms 後前往下一題或結束
+  setTimeout(()=>{
+    idx++;
+    if(idx >= problems.length){
+      showSummary();
+      return;
+    }
+    renderCurrent();
+  },600);
+}
+
+function showSummary(){
+  const area = document.getElementById('problemArea');
+  area.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'problemCard';
+  const rate = stats.total ? Math.round((stats.correct/stats.total)*100) : 0;
+  card.innerHTML = `
+    <div class="title">全部完成！</div>
+    <div class="expr">你完成了 ${stats.total} 題</div>
+    <div class="hint">答對 ${stats.correct} 題，正確率 ${rate}%</div>
+    <div style="margin-top:12px"><button id="again">再出一組</button></div>
+  `;
+  area.appendChild(card);
+  document.getElementById('again').addEventListener('click', ()=>{
+    // 重新產生剛剛的題組
+    idx = 0; stats.done = 0; stats.correct = 0;
+    renderCurrent();
+    updateStats();
+  });
+}
+
+/* ---------- 產生題目按鈕 ---------- */
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  const op = document.getElementById('operation').value;
+  const diff = document.getElementById('difficulty').value;
+  let count = parseInt(document.getElementById('count').value) || 10;
+  if(count < 1) count = 1; if(count > 50) count = 50;
+  problems = [];
+  for(let i=0;i<count;i++){
+    problems.push(makeProblem(op,diff));
+  }
+  idx = 0; stats = {total:count, done:0, correct:0};
+  renderCurrent();
+  updateStats();
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  problems = []; idx = 0; stats = {total:0, done:0, correct:0};
+  document.getElementById('problemArea').innerHTML = '<div class="small">已重置，請按「產生題目」開始。</div>';
+  updateStats();
+});
+
+function updateStats(){
+  document.getElementById('total').textContent = stats.total || 0;
+  document.getElementById('done').textContent = stats.done || 0;
+  document.getElementById('correct').textContent = stats.correct || 0;
+  const rate = stats.total ? Math.round((stats.correct/stats.total)*100) : 0;
+  document.getElementById('rate').textContent = `${rate}%`;
+}
+
+/* ---------- 預設行為：不自動產生（等待使用者） ---------- */
+
+</script>
 </body>
 </html>
+
