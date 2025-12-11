@@ -1,204 +1,749 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>數學訓練器</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>題庫 — 指數/根式·對數·多項式·不等式·科學記號·直線圓 （單題練習）</title>
+
+<!-- MathJax for LaTeX rendering -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <style>
-  body{
-    font-family: "Noto Sans TC", sans-serif;
-    background:#f6f6f6;
-    margin:0;
-    padding:20px;
-    font-size:20px; /* 主字體：B級放大 */
-  }
-  .container{
-    max-width:650px;
-    margin:0 auto;
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 4px 20px rgba(0,0,0,0.1);
-  }
-  h1{
-    text-align:center;
-    font-size:32px; /* B級放大 */
-    margin-bottom:20px;
-  }
-  #question{
-    font-size:24px;   /* 題目：B級放大 */
-    font-weight:600;
-    margin-bottom:15px;
-  }
-  input{
-    width:100%;
-    font-size:22px;  /* 輸入框大字 */
-    padding:12px;
-    border-radius:10px;
-    border:2px solid #ccc;
-    margin-top:5px;
-  }
-  .result{
-    margin-top:10px;
-    font-size:22px;
-    font-weight:600;
-  }
-  #nextBtn{
-    width:100%;
-    margin-top:20px;
-    padding:12px;
-    font-size:20px;
-    background:#4f8cff;
-    color:white;
-    border:0;
-    border-radius:10px;
-    cursor:pointer;
-  }
-  #nextBtn:active{
-    transform:scale(0.98);
-  }
-  .correct{ color:#0a9b32; }
-  .wrong{ color:#d11a1a; }
+:root{
+  --bg:#071226; --card:#0b1320; --muted:#9aa4b2; --accent:#60a5fa; --ok:#34d399; --err:#fb7185;
+  --main-font-size:20px; /* B 級主字體 */
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:linear-gradient(180deg,#041022 0%, #071226 100%); color:#e8eef6;
+  font-family: "Noto Sans TC", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-size: var(--main-font-size);
+  -webkit-font-smoothing:antialiased; padding:20px;
+}
+.container{max-width:980px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.title{font-size:28px;font-weight:700}
+.subtitle{color:var(--muted);font-size:14px}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card{background:var(--card);padding:16px;border-radius:12px;margin-top:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:14px;margin-top:12px}
+@media (max-width:900px){ .grid{grid-template-columns:1fr} }
+
+.small{font-size:13px;color:var(--muted)}
+.selectors{display:flex;flex-direction:column;gap:8px}
+label{display:flex;gap:8px;align-items:center}
+input[type="number"],select,button,input[type="text"]{
+  padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;
+}
+button{background:linear-gradient(90deg,var(--accent),#3b82f6);border:0;color:#042033;font-weight:700;cursor:pointer}
+button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+.problemArea{min-height:220px}
+.problemCard{padding:16px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.qtitle{font-size:18px;color:var(--muted)}
+.qexpr{font-size:24px;font-weight:700;margin-top:10px;margin-bottom:8px} /* 題目較大 */
+.hint{color:var(--muted);font-size:14px;margin-bottom:8px}
+.inputRow{display:flex;gap:8px;align-items:center}
+.inputRow input[type="text"]{flex:1;padding:12px;font-size:20px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+.feedback{margin-top:10px;font-weight:700}
+.feedback.ok{color:var(--ok)}
+.feedback.bad{color:var(--err)}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;color:var(--muted);font-size:14px}
+.record{max-height:240px;overflow:auto;padding:8px;border-radius:8px;border:1px dashed rgba(255,255,255,0.03);margin-top:8px;background:rgba(255,255,255,0.01)}
+footer{margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+kbd{background:#0b1220;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04)}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>數學題庫訓練器</h1>
+  <div class="header">
+    <div>
+      <div class="title">題庫練習（單題練習模式）</div>
+      <div class="subtitle">題型：指數與根式 / 對數 / 多項式與函數 / 不等式 / 科學記號 / 直線與圓 — 進階版</div>
+    </div>
 
-  <div id="question">題目載入中...</div>
+    <div class="controls">
+      <div class="small">字型 B 版 • 按 <kbd>Enter</kbd> 送出並跳下一題</div>
+    </div>
+  </div>
 
-  <input id="answer" placeholder="輸入你的答案（按 Enter 送出）">
+  <div class="grid">
+    <!-- 左側控制列 -->
+    <aside>
+      <div class="card">
+        <div class="small" style="margin-bottom:8px">章節（勾選欲出題章節）</div>
+        <div class="selectors">
+          <label><input type="checkbox" class="chap" value="1" checked> 指數與根式</label>
+          <label><input type="checkbox" class="chap" value="2" checked> 對數（進階）</label>
+          <label><input type="checkbox" class="chap" value="3" checked> 多項式與函數</label>
+          <label><input type="checkbox" class="chap" value="4" checked> 不等式（含絕對值）</label>
+          <label><input type="checkbox" class="chap" value="5" checked> 數學文字題（科學記號・成長率）</label>
+          <label><input type="checkbox" class="chap" value="6" checked> 直線與圓</label>
+        </div>
 
-  <div class="result" id="result"></div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
 
-  <button id="nextBtn">下一題 ▶</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label>題數（組）<input id="groupCount" type="number" value="12" style="width:90px"></label>
+          <label><input id="timerEnable" type="checkbox"> 啟用計時（分）</label>
+          <input id="timerMin" type="number" value="30" style="width:80px">
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button id="startBtn">開始出題</button>
+          <button id="resetBtn" class="ghost">重置</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <button id="exportBtn" class="ghost">匯出紀錄 (CSV)</button>
+          <button id="clearRecord" class="ghost">清除紀錄</button>
+        </div>
+
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">測驗統計</div>
+        <div class="small">總題數：<span id="statTotal">0</span></div>
+        <div class="small">已作：<span id="statDone">0</span></div>
+        <div class="small">答對：<span id="statCorrect">0</span></div>
+        <div class="small">正確率：<span id="statRate">0%</span></div>
+        <div class="small" id="timerRead">計時：未啟用</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">答題紀錄（最近 200 筆）</div>
+        <div id="record" class="record">尚無紀錄</div>
+      </div>
+    </aside>
+
+    <!-- 右側題目區 -->
+    <main>
+      <div class="card problemCard">
+        <div class="qtop">
+          <div class="qtitle" id="qTitle">題型</div>
+          <div class="small" id="qIndex">第 0 / 0 題</div>
+        </div>
+
+        <div class="qexpr" id="qExpr">按「開始出題」生成題目</div>
+        <div class="hint" id="qHint"></div>
+
+        <div class="inputRow" style="margin-top:6px">
+          <input id="userInput" type="text" placeholder="輸入答案（支援分數 a/b、sqrt()、√、科學記號），按 Enter 送出">
+          <button id="submitBtn">提交</button>
+        </div>
+
+        <div id="feedback" class="feedback" style="display:none"></div>
+
+        <div class="stats" style="margin-top:10px">
+          <div>已作：<span id="done">0</span></div>
+          <div>答對：<span id="correct">0</span></div>
+          <div>正確率：<span id="rate">0%</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer>說明：系統自動接受等價的數值型答案（例如 1/2 = 0.5，sqrt(2) = √2），證明題或書寫步驟需人工閱卷（系統會標記）。</footer>
 </div>
 
 <script>
-/* ========= 題型生成（符合你提供的高一範圍）========= */
+/* ===========================
+  Utilities：解析輸入、比較、CSV、storage
+   - parseAnswerString: 支援數字、分數 a/b、sqrt(n)、科學記號 (1.23e4)、'undefined'
+   - nearlyEqual: 比較浮點（允許微小誤差）
+   - normalizeExprString: 用於簡單字串正則化比對
+   - storage for record
+   =========================== */
 
 function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-function pick(arr){ return arr[randInt(0,arr.length-1)]; }
+function pick(arr){ return arr[randInt(0, arr.length-1)]; }
+function nearlyEqual(a,b,eps=1e-6){ return Math.abs(Number(a)-Number(b)) < eps; }
 
-/* ① 指數與根式 */
-function genExponentRadical(){
-  const a = randInt(2,9);
-  const b = randInt(2,9);
-  const c = randInt(2,5);
-
-  return {
-    q:`化簡： √${a*c} + √${b*c} `,
-    a:(Math.sqrt(a*c)+Math.sqrt(b*c)).toString()
-  };
+function normalizeInput(s){
+  if(s===null || s===undefined) return '';
+  s = String(s).trim();
+  s = s.replace(/，/g, ',');
+  s = s.replace(/√/g, 'sqrt');
+  s = s.replace(/\s+/g, '');
+  s = s.replace(/∕/g, '/');
+  return s;
 }
 
-/* ② 對數 */
-function genLog(){
-  const a = pick([2,3,5,7,10]);
-  const b = randInt(2,30);
-  return {
-    q:`計算： log_${a} (${a*b}) `,
-    a:(1+Math.log10(b)/Math.log10(a)).toString()
-  };
-}
+function parseAnswerString(s){
+  s = normalizeInput(s);
+  if(s==='' ) return null;
+  if(s.toLowerCase() === 'undefined' || s === 'undef') return 'undefined';
 
-/* ③ 多項式（簡單二次） */
-function genPoly(){
-  const r1 = randInt(-5,5);
-  const r2 = randInt(-5,5);
-  const a = randInt(1,3);
-
-  return {
-    q:`已知 f(x) = ${a}(x-${r1})(x-${r2})，求 f(1)`,
-    a:(a*(1-r1)*(1-r2)).toString()
-  };
-}
-
-/* ④ 絕對值不等式 */
-function genAbs(){
-  const A = randInt(1,5);
-  const B = randInt(1,10);
-
-  return {
-    q:`求解： |${A}x - ${B}| = ${A}`,
-    a:`x = ${(B+A)/A}, ${(B-A)/A}`
-  };
-}
-
-/* ⑤ 科學記號 */
-function genSci(){
-  const a = randInt(2,9);
-  const b = randInt(2,9);
-  const x = randInt(3,10);
-
-  return {
-    q:`比較大小： ${a}×10^${x} 與 ${b}×10^${x-1}，哪個大？`,
-    a: (a*10**x > b*10**(x-1)) ? `${a}×10^${x}` : `${b}×10^${x-1}`
-  };
-}
-
-/* ⑥ 圓與直線 */
-function genCircle(){
-  const h = randInt(-5,5);
-  const k = randInt(-5,5);
-  const r = randInt(3,8);
-
-  return {
-    q:`圓心 (${h},${k}) 半徑 ${r} 的圓，點 (0,0) 與其距離關係為？（相離/相交/內含）`,
-    a:(Math.hypot(h,k) > r ? "相離" : Math.hypot(h,k) === r ? "相切" : "相交")
+  // handle scientific notation like 1.23e4
+  if(/^[+\-]?\d+(\.\d+)?e[+\-]?\d+$/i.test(s)) {
+    const v = Number(s);
+    return isFinite(v)? v : null;
   }
+
+  // direct numeric
+  if(!isNaN(Number(s))) return Number(s);
+
+  // fraction form a/b
+  if(s.includes('/')){
+    const parts = s.split('/');
+    if(parts.length === 2){
+      const a = Number(parts[0]), b = Number(parts[1]);
+      if(!isNaN(a) && !isNaN(b) && b!==0) return a/b;
+    }
+  }
+
+  // sqrt(...) or Math expressions: convert sqrt(x) -> Math.sqrt(x)
+  try{
+    // allow expressions like sqrt(3)/2 or (1+sqrt(2))/3
+    const expr = s.replace(/sqrt\(([^)]+)\)/g, 'Math.sqrt($1)');
+    // disallow letters except Math, sqrt replaced, decimal, operators, parentheses
+    if(/[^0-9Mathsqrt\.\+\-\*\/\^\(\)e]/i.test(expr) && !expr.includes('Math')) {
+      // may still contain Unicode operators, try fallback null
+    }
+    // '^' not JS exponent, replace a^b with Math.pow(a,b) - simple approach:
+    const expr2 = expr.replace(/([0-9\)\.e]+)\^([0-9\(\.e]+)/g, 'Math.pow($1,$2)');
+    const val = Function('"use strict";return (' + expr2 + ')')();
+    if(typeof val === 'number' && isFinite(val)) return val;
+  } catch(e){}
+  return null;
 }
 
-const generators = [genExponentRadical, genLog, genPoly, genAbs, genSci, genCircle];
-
-let currentAnswer = "";
-
-/* ====== 出題 ====== */
-
-function newQuestion(){
-  const g = pick(generators)();
-  document.getElementById("question").textContent = g.q;
-  currentAnswer = g.a;
-  document.getElementById("answer").value = "";
-  document.getElementById("result").textContent = "";
+function normalizeExprString(s){
+  // simple normalizer for algebraic answers: remove spaces, replace sqrt with √ for display consistency
+  if(!s) return '';
+  return s.toString().replace(/\s+/g,'').replace(/sqrt/g,'√').replace(/Math\.sqrt/g,'√');
 }
 
-/* ====== 批改 ====== */
+/* Record storage */
+function pushRecord(obj){
+  const arr = JSON.parse(localStorage.getItem('practice_records')||'[]');
+  arr.unshift(obj);
+  if(arr.length>200) arr.pop();
+  localStorage.setItem('practice_records', JSON.stringify(arr));
+  renderRecords();
+}
+function renderRecords(){
+  const arr = JSON.parse(localStorage.getItem('practice_records')||'[]');
+  const el = document.getElementById('record');
+  el.innerHTML = '';
+  if(arr.length===0){ el.textContent='尚無紀錄'; return; }
+  arr.forEach(r=>{
+    const div = document.createElement('div');
+    div.className='small';
+    div.style.marginBottom='6px';
+    div.textContent = `${r.time} | ${r.title} | 答:${r.user} | 結果:${r.result}`;
+    el.appendChild(div);
+  });
+}
+renderRecords();
 
-function check(){
-  const user = document.getElementById("answer").value.trim();
-  const result = document.getElementById("result");
+/* Export CSV */
+function exportCSV(){
+  const arr = JSON.parse(localStorage.getItem('practice_records')||'[]');
+  if(arr.length===0){ alert('無紀錄'); return; }
+  let csv = 'time,title,user,result\n';
+  arr.forEach(r=> csv += `"${r.time}","${r.title}","${r.user}","${r.result}"\n`);
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'practice_records.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
 
-  if (user === "") return;
+/* ===========================
+  Problem generators (only the 6 categories you requested)
+  Each generator returns an object:
+  {
+    id: unique id string,
+    title: string,
+    exprTex: LaTeX expression string for rendering,
+    hint: optional hint string,
+    answer: canonical answer (string or numeric or array),
+    check: function(userInput) -> boolean (or object {ok,msg})
+  }
+  =========================== */
 
-  // 寬鬆比對
-  if (user.replace(/\s+/g,"") === currentAnswer.replace(/\s+/g,"")){
-    result.textContent = "✔ 正確！";
-    result.className = "result correct";
+/* Helper: unique id */
+function makeId(prefix){
+  return prefix + '_' + Date.now().toString(36) + '_' + Math.floor(Math.random()*1e6);
+}
+
+/* 1. 指數與根式（多層根式 / 指數混合） */
+function gen_exponent_radical(){
+  // Example advanced root: sqrt(5 - 2*sqrt(6)) -> sqrt(3)-sqrt(2)
+  const a = 3, b = 2; // produce classical type
+  const id = makeId('exp');
+  return {
+    id, title:'指數與根式 — 多層根式化簡',
+    exprTex: `\\\\displaystyle \\sqrt{5-2\\sqrt{6}}`,
+    hint:'嘗試設為 √a - √b，平方後對應係數。',
+    answerTex: `\\\\sqrt{3}-\\\\sqrt{2}`,
+    // numeric value for tolerant checking
+    answerValue: parseAnswerString('Math.sqrt(3)-Math.sqrt(2)'),
+    check: function(u){
+      // accept equivalent numeric value or exact normalized string
+      const p = parseAnswerString(u);
+      if(p !== null) return nearlyEqual(p, this.answerValue);
+      // try normalized string compare with sqrt(...) forms
+      const s = normalizeInput(u).replace(/sqrt\(/g,'sqrt(');
+      if(s === 'sqrt(3)-sqrt(2)' || s === '√3-√2' || s === 'sqrt(3)-√2') return true;
+      return false;
+    }
+  };
+}
+
+/* exponent mix: a^{-2} b^3 / (a b^{-1}) -> b^4 / a^3 */
+function gen_exponent_mix(){
+  const id = makeId('expMix');
+  return {
+    id, title:'指數與根式 — 指數混合化簡',
+    exprTex: `\\\\displaystyle \\frac{a^{-2}b^{3}}{a b^{-1}}`,
+    hint:'使用冪的除法與乘法指數規則。',
+    answerTex: `\\\\frac{b^{4}}{a^{3}}`,
+    answerValue: null, // algebraic; accept equal numeric if assign numbers
+    check: function(u){
+      // accept numeric forms if user substitutes a,b by 1 (or treat as algebraic string)
+      const s = normalizeInput(u);
+      // accept b^4/a^3, b^4/a^3, (b^4)/(a^3)
+      if(/b\^?4\/a\^?3/.test(s) || /b4\/a3/.test(s)) return true;
+      // accept fraction-like b^4/a^3 in various notations
+      if(s === 'b^4/a^3' || s === 'b4/a3' || s === 'b^4/(a^3)' || s === '(b^4)/(a^3)') return true;
+      // allow users to write b^4 a^-3
+      return false;
+    }
+  };
+}
+
+/* 2. 對數（換底 / 對數方程） */
+function gen_log_change_of_base(){
+  const id = makeId('log');
+  // give symbolic problem: log_3 5 in terms of log2(3)=a and log2(5)=b -> b/a
+  return {
+    id, title:'對數 — 換底與表示',
+    exprTex:`\\\\displaystyle \\text{已知 }\\\\log_{2}3=a,\\\\;\\\\log_{2}5=b\\\\;\\\\text{，求 }\\\\log_{3}5`,
+    hint:'利用換底公式： log_c d = log_k d / log_k c',
+    answerTex:`\\\\frac{b}{a}`,
+    check: function(u){
+      const s = normalizeInput(u);
+      if(s === 'b/a' || s === 'b÷a' || s === 'b/a') return true;
+      // numeric compare not applicable without a,b; accept b/a forms
+      return false;
+    }
+  };
+}
+
+function gen_log_equation(){
+  const id = makeId('logEq');
+  // log2(x+1)+log2(x-1)=3 -> x=3
+  return {
+    id, title:'對數方程式 — 單一未知數',
+    exprTex:`\\\\displaystyle \\\\log_{2}(x+1)+\\\\log_{2}(x-1)=3`,
+    hint:'合併對數，注意 domain x>1',
+    answerTex:`\\\\boxed{3}`,
+    answerValue: 3,
+    check: function(u){
+      const v = parseAnswerString(u);
+      if(v !== null) return nearlyEqual(v, 3);
+      const s = normalizeInput(u);
+      if(s === '3') return true;
+      return false;
+    }
+  };
+}
+
+/* 3. 多項式與函數 */
+function gen_cubic_factor(){
+  // f(x) = x^3 - 3x^2 -4x + 12 -> (x-2)(x^2 - x -6)
+  const id = makeId('cubic');
+  return {
+    id, title:'多項式 — 三次式因式分解判別',
+    exprTex:`\\\\displaystyle f(x)=x^{3}-3x^{2}-4x+12\\\\quad\\\\text{判斷能否提出一次因子}`,
+    hint:'嘗試帶入整數根 (±1,±2,±3,±4,±6,±12)',
+    answerTex:`(x-2)(x^{2}-x-6)`,
+    check: function(u){
+      const s = normalizeInput(u);
+      // accept (x-2)(x^2-x-6) in various caret forms
+      if(/x-2/.test(s) && /x\^?2-?x-?6/.test(s)) return true;
+      return false;
+    }
+  };
+}
+
+function gen_quadratic_max(){
+  const id = makeId('quadMax');
+  return {
+    id, title:'二次函數 — 最大值',
+    exprTex:`\\\\displaystyle f(x)=-2x^{2}+4x+5\\\\quad\\\\text{求最大值}`,
+    hint:'求頂點',
+    answerValue: 7,
+    answerTex: `7`,
+    check: function(u){
+      const v = parseAnswerString(u);
+      if(v !== null) return nearlyEqual(v, 7);
+      return normalizeInput(u) === '7';
+    }
+  };
+}
+
+function gen_function_compare(){
+  const id = makeId('funcComp');
+  // f(x)=x^2-kx, condition f(3)<f(5) -> k<8
+  return {
+    id, title:'函數比較（含參數）',
+    exprTex:`\\\\displaystyle f(x)=x^{2}-kx\\\\quad\\\\text{若 }f(3)<f(5),\\\\text{ 求 }k\\\\text{ 範圍}`,
+    hint:'代入比較 f(3)=9-3k, f(5)=25-5k',
+    answerTex:`k<8`,
+    check: function(u){
+      const s = normalizeInput(u);
+      if(s === 'k<8' || s === 'klt8' || s === 'k<8') return true;
+      // if user supplies a number, not accepted
+      return false;
+    }
+  };
+}
+
+/* 4. 不等式（絕對值 / 二次不等式） */
+function gen_abs_inequality(){
+  const id = makeId('abs');
+  // example: |2x-3| <= 5 -> [-1,4]
+  return {
+    id, title:'不等式 — 絕對值不等式',
+    exprTex:`\\\\displaystyle |2x-3|\\\\le 5`,
+    hint:'拆區間 -5 ≤ 2x-3 ≤ 5',
+    answerTex:`[-1,4]`,
+    check: function(u){
+      const s = normalizeInput(u);
+      if(s === '[-1,4]' || s === '-1<=x<=4' || s === 'x\\in[-1,4]') return true;
+      return false;
+    }
+  };
+}
+
+function gen_quadratic_inequality(){
+  const id = makeId('quadIneq');
+  // x^2 -4x -5 <0 -> (-1,5)
+  return {
+    id, title:'不等式 — 二次不等式（圖形法）',
+    exprTex:`\\\\displaystyle x^{2}-4x-5<0`,
+    hint:'找根並判定開口方向',
+    answerTex:`(-1,5)`,
+    check: function(u){
+      const s = normalizeInput(u);
+      if(s === '(-1,5)' || s === '-1<x<5') return true;
+      return false;
+    }
+  };
+}
+
+/* 5. 文字題（科學記號、成長率、位數變化） */
+function gen_scientific_compare(){
+  const id = makeId('sci');
+  const a = (randInt(2,9)+Math.round(Math.random()*99)/100); // 2.00~9.99
+  const b = (randInt(2,9)+Math.round(Math.random()*99)/100);
+  const expA = randInt(3,6), expB = expA-1;
+  return {
+    id, title:'文字題 — 科學記號比較',
+    exprTex:`\\\\displaystyle 比較\\\\; ${a.toFixed(2)}\\\\times10^{${expA}}\\\\;與\\\\; ${b.toFixed(2)}\\\\times10^{${expB}}\\\\;哪個較大？`,
+    hint:'把底數換成同一指數比較係數',
+    answerTex: ( (a*Math.pow(10,expA)) > (b*Math.pow(10,expB)) ) ? `${a.toFixed(2)}\\\\times10^{${expA}}` : `${b.toFixed(2)}\\\\times10^{${expB}}`,
+    check: function(u){
+      const s = normalizeInput(u);
+      const expected = this.answerTex.replace(/\s+/g,'');
+      if(normalizeInput(u) === normalizeInput(expected)) return true;
+      // numeric compare
+      const v = parseAnswerString(u);
+      if(v !== null) {
+        const expVal = (a*Math.pow(10,expA) > b*Math.pow(10,expB)) ? a*Math.pow(10,expA) : b*Math.pow(10,expB);
+        return nearlyEqual(v, expVal);
+      }
+      return false;
+    }
+  };
+}
+
+function gen_growth_rate(){
+  const id = makeId('growth');
+  // growth 20% per year, after 2 years -> 1.44
+  return {
+    id, title:'文字題 — 成長率',
+    exprTex:`\\\\displaystyle 若每年成長20\\\\%，兩年後為原本的多少倍？`,
+    hint:'連乘成長率',
+    answerTex:`1.44`,
+    answerValue: 1.44,
+    check: function(u){
+      const v = parseAnswerString(u);
+      if(v !== null) return nearlyEqual(v, 1.44);
+      return normalizeInput(u) === '1.44';
+    }
+  };
+}
+
+function gen_power_digits(){
+  const id = makeId('digits');
+  // N = a * 10^b, b increases by 3 => *1000
+  return {
+    id, title:'文字題 — 指數變化倍數',
+    exprTex:`\\\\displaystyle 若 N = a\\\\times10^{b}，b 增加 3，問新數為原本的幾倍？`,
+    hint:'每增加 1 指數，乘 10',
+    answerTex:`1000`,
+    check: function(u){
+      const v = parseAnswerString(u);
+      if(v !== null) return nearlyEqual(v,1000);
+      return normalizeInput(u) === '1000';
+    }
+  };
+}
+
+/* 6. 直線與圓 */
+function gen_circle_relation(){
+  // C1 center (2,0) r=3, C2 center (-3,0) r=2 (example outer tangent)
+  // Make randomized but ensure interesting relations
+  const h1 = randInt(-4,4), k1 = randInt(-3,3);
+  const h2 = randInt(-4,4), k2 = randInt(-3,3);
+  let r1 = randInt(2,6), r2 = randInt(2,6);
+  // adjust to create variety
+  const d = Math.hypot(h1-h2, k1-k2);
+  // relation label:
+  const sumR = r1 + r2, diffR = Math.abs(r1 - r2);
+  let relation;
+  if(Math.abs(d - sumR) < 1e-6) relation = '外切';
+  else if(Math.abs(d - diffR) < 1e-6) relation = '內切';
+  else if(d > sumR) relation = '相離';
+  else if(d < diffR) relation = '包含';
+  else relation = '相交';
+  const id = makeId('circleRel');
+  return {
+    id, title:'直線/圓 — 圓心距判別',
+    exprTex:`\\\\displaystyle C_{1}:(x-${h1})^{2}+(y-${k1})^{2}=${r1}^{2},\\\\;C_{2}:(x-${h2})^{2}+(y-${k2})^{2}=${r2}^{2}\\\\text{。判斷兩圓關係}`,
+    hint:`計算中心距 d = \\sqrt{(${h1}-${h2})^{2}+(${k1}-${k2})^{2}}，比較 d 與 r1±r2`,
+    answerTex: relation,
+    check: function(u){
+      const s = normalizeInput(u);
+      if(s === normalizeInput(relation)) return true;
+      // accept Chinese synonyms
+      const map = {'外切':'外切','內切':'內切','相離':'相離','相交':'相交','包含':'包含'};
+      return false;
+    }
+  };
+}
+
+function gen_point_line_distance(){
+  // distance from (3,4) to 3x-4y+6=0 example earlier; but generate random coefficients
+  const a = randInt(1,5), b = randInt(1,5);
+  const c = randInt(-10,10);
+  const x = randInt(-6,6), y = randInt(-6,6);
+  const num = Math.abs(a*x + b*y + c);
+  const den = Math.hypot(a,b);
+  const value = num/den;
+  return {
+    id: makeId('ptline'),
+    title:'直線 — 點到直線距離',
+    exprTex:`\\\\displaystyle 點\\;(${x},${y})\\\\;到\\\\;${a}x+${b}y+(${c})=0\\\\;的距離`,
+    hint:'使用公式 d = |ax0+by0+c|/√(a^2+b^2)',
+    answerValue: value,
+    answerTex: value.toString(),
+    check: function(u){
+      const v = parseAnswerString(u);
+      if(v !== null) return nearlyEqual(v, this.answerValue);
+      return false;
+    }
+  };
+}
+
+/* All generators list (chapters mapping) */
+const chapterGenerators = {
+  1: [gen_exponent_radical, gen_exponent_mix],
+  2: [gen_log_change_of_base, gen_log_equation],
+  3: [gen_cubic_factor, gen_quadratic_max, gen_function_compare],
+  4: [gen_abs_inequality, gen_quadratic_inequality],
+  5: [gen_scientific_compare, gen_growth_rate, gen_power_digits],
+  6: [gen_circle_relation, gen_point_line_distance]
+};
+
+/* ===========================
+  Generate a non-duplicate question set (for the session)
+  =========================== */
+function generateSet(selectedChaps, count){
+  const pool = [];
+  selectedChaps.forEach(ch => {
+    if(chapterGenerators[ch]) chapterGenerators[ch].forEach(fn => pool.push(fn));
+  });
+  if(pool.length === 0){
+    // fallback use all
+    Object.values(chapterGenerators).flat().forEach(fn=>pool.push(fn));
+  }
+  const set = [];
+  const sigs = new Set();
+  let attempts = 0;
+  while(set.length < count && attempts < count*20 + 200){
+    attempts++;
+    const gen = pick(pool);
+    const q = gen();
+    const sig = q.id || (q.exprTex + q.title).slice(0,60);
+    if(!sigs.has(sig)){
+      sigs.add(sig);
+      set.push(q);
+    }
+  }
+  return set;
+}
+
+/* ===========================
+  UI Flow: start, render, submit, stats, timer
+  =========================== */
+let questions = [], qIndex = 0;
+let stats = {total:0, done:0, correct:0};
+let timerHandle = null;
+
+function updateStatsUI(){
+  document.getElementById('statTotal').textContent = stats.total;
+  document.getElementById('statDone').textContent = stats.done;
+  document.getElementById('statCorrect').textContent = stats.correct;
+  const rate = stats.total? Math.round((stats.correct/stats.total)*100) : 0;
+  document.getElementById('statRate').textContent = rate + '%';
+  document.getElementById('done').textContent = stats.done;
+  document.getElementById('correct').textContent = stats.correct;
+  document.getElementById('rate').textContent = rate + '%';
+  document.getElementById('qIndex').textContent = `第 ${qIndex+1} / ${questions.length} 題`;
+}
+
+function startTimer(mins){
+  if(timerHandle) clearInterval(timerHandle);
+  if(!mins || mins<=0){ document.getElementById('timerRead').textContent = '計時：未啟用'; return; }
+  let sec = Math.floor(mins*60);
+  document.getElementById('timerRead').textContent = `計時：${mins} 分`;
+  timerHandle = setInterval(()=>{
+    sec--;
+    const m = Math.floor(sec/60), s = sec%60;
+    document.getElementById('timerRead').textContent = `計時：${m}分${s}秒`;
+    if(sec <= 0){ clearInterval(timerHandle); timerHandle = null; alert('時間到，測驗結束'); showSummary(); }
+  },1000);
+}
+
+function renderQuestion(){
+  if(questions.length === 0){
+    document.getElementById('qExpr').textContent = '請按「開始出題」';
+    return;
+  }
+  if(qIndex >= questions.length){
+    showSummary(); return;
+  }
+  const q = questions[qIndex];
+  document.getElementById('qTitle').textContent = q.title;
+  // render LaTeX via MathJax
+  const exprEl = document.getElementById('qExpr');
+  exprEl.textContent = ''; // clear
+  exprEl.innerHTML = `\\(${q.exprTex}\\)`;
+  // typeset
+  if(window.MathJax && window.MathJax.typesetPromise){
+    MathJax.typesetClear(); MathJax.typesetPromise([exprEl]).catch(()=>{});
+  }
+  document.getElementById('qHint').textContent = q.hint || '';
+  document.getElementById('userInput').value = '';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('userInput').focus();
+  updateStatsUI();
+}
+
+/* Submit & check */
+function submitAnswer(){
+  if(questions.length === 0) return;
+  const q = questions[qIndex];
+  const userRaw = document.getElementById('userInput').value.trim();
+  const fb = document.getElementById('feedback');
+  let ok = false;
+  try{
+    const res = q.check(userRaw);
+    if(typeof res === 'boolean') ok = res;
+    else if(res && typeof res === 'object' && 'ok' in res) ok = res.ok;
+    else ok = Boolean(res);
+  } catch(e){
+    ok = false;
+  }
+
+  if(ok){
+    fb.style.display = 'block'; fb.textContent = '✔ 正確'; fb.className = 'feedback ok';
+    stats.correct++;
+    pushRecord({time:new Date().toLocaleString(), title:q.title, user: userRaw, result:'正確'});
   } else {
-    result.textContent = `✘ 錯誤，正確答案：${currentAnswer}`;
-    result.className = "result wrong";
+    // show canonical answer if available
+    let ansStr = q.answerTex || (q.answerValue !== undefined && q.answerValue !== null ? String(q.answerValue) : '需人工評閱');
+    fb.style.display = 'block'; fb.textContent = '✘ 錯誤；正確答案：' + ansStr; fb.className = 'feedback bad';
+    pushRecord({time:new Date().toLocaleString(), title:q.title, user: userRaw, result:'錯誤'});
   }
+  stats.done++;
+  updateStatsUI();
+
+  // short delay then next
+  setTimeout(()=>{
+    qIndex++;
+    if(qIndex >= questions.length) showSummary();
+    else renderQuestion();
+  }, 700);
 }
 
-/* ====== Enter 直接下一題 ====== */
+function showSummary(){
+  // show end card
+  const area = document.getElementById('qExpr');
+  area.innerHTML = '\\( \\text{測驗結束 — 顯示摘要} \\)';
+  if(window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([area]).catch(()=>{});
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  fb.className = 'feedback';
+  fb.textContent = `完成：${stats.done} 題，答對：${stats.correct} 題，正確率：${stats.total? Math.round((stats.correct/stats.total)*100):0}%`;
+  updateStatsUI();
+}
 
-document.getElementById("answer").addEventListener("keydown", e=>{
-  if(e.key === "Enter"){
-    check();
-    setTimeout(()=> newQuestion(), 900);
+/* Bind UI */
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  // collect selected chapters
+  const checked = Array.from(document.querySelectorAll('.chap')).filter(c=>c.checked).map(c=>Number(c.value));
+  const count = Math.max(1, Math.min(200, Number(document.getElementById('groupCount').value) || 12));
+  questions = generateSet(checked, count);
+  qIndex = 0; stats = {total:questions.length, done:0, correct:0};
+  updateStatsUI();
+  renderQuestion();
+  // timer
+  if(document.getElementById('timerEnable').checked){
+    const mins = Math.max(1, Number(document.getElementById('timerMin').value) || 30);
+    startTimer(mins);
+  } else {
+    if(timerHandle){ clearInterval(timerHandle); timerHandle = null; document.getElementById('timerRead').textContent='計時：未啟用'; }
   }
 });
 
-/* 按鈕版 */
-document.getElementById("nextBtn").onclick = ()=>{
-  check();
-  setTimeout(()=> newQuestion(), 900);
-};
+document.getElementById('submitBtn').addEventListener('click', submitAnswer);
+document.getElementById('userInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitAnswer(); }
+});
 
-newQuestion(); // 初始
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  questions = []; qIndex = 0; stats = {total:0, done:0, correct:0};
+  updateStatsUI(); renderQuestion();
+  document.getElementById('timerRead').textContent = '計時：未啟用';
+});
+
+document.getElementById('exportBtn').addEventListener('click', exportCSV);
+document.getElementById('clearRecord').addEventListener('click', ()=>{
+  localStorage.removeItem('practice_records'); renderRecords();
+  alert('已清除紀錄');
+});
+
+function exportCSV(){
+  const arr = JSON.parse(localStorage.getItem('practice_records')||'[]');
+  if(arr.length===0){ alert('無紀錄'); return; }
+  let csv = '時間,題型,使用者答案,結果\n';
+  arr.forEach(r=> csv += `"${r.time}","${r.title}","${String(r.user).replace(/"/g,'""')}","${r.result}"\n`);
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'practice_records.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* initial UI */
+updateStatsUI();
+renderQuestion();
+
 </script>
-
 </body>
 </html>
