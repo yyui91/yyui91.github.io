@@ -1,496 +1,239 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>高中數學題目產生器（指數/對數、三角、機率）</title>
-  <style>
-    :root{
-      --bg:#071226; --card:#0b1320; --muted:#9aa4b2; --accent:#60a5fa; --ok:#34d399; --err:#fb7185;
-      font-family: "Noto Sans TC", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+<meta charset="UTF-8">
+<title>高中數學練習系統（高一）</title>
+<style>
+    body {
+        font-family: "Microsoft JhengHei", sans-serif;
+        background: #0f172a;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 30px;
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(180deg,#041022 0%, #071226 100%);color:#e6eef6;min-height:100vh;padding:22px}
-    .container{max-width:920px;margin:0 auto}
-    h1{margin:0 0 8px;font-size:20px}
-    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    select,input[type=number],button{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
-    button{cursor:pointer;background:linear-gradient(90deg,var(--accent),#3b82f6);border:0;color:#042033;font-weight:700}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 22px rgba(2,6,23,0.6)}
-    #problemArea{margin-top:12px;min-height:180px;display:flex;flex-direction:column;gap:12px}
-    .problemCard{padding:16px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
-    .title{font-size:14px;color:var(--muted);margin-bottom:6px}
-    .expr{font-size:20px;font-weight:700;margin-bottom:8px}
-    .hint{color:var(--muted);font-size:13px;margin-bottom:8px}
-    .feedback{margin-top:8px;font-weight:700}
-    .feedback.ok{color:var(--ok)}
-    .feedback.bad{color:var(--err)}
-    .stats{margin-top:12px;color:var(--muted);font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .small{font-size:13px;color:var(--muted)}
-    footer{margin-top:16px;color:var(--muted);font-size:13px;text-align:center}
-    @media (max-width:720px){ .top{flex-direction:column;align-items:flex-start} }
-  </style>
+    h1 { margin-bottom: 10px; }
+    #card {
+        background: #1e293b;
+        padding: 25px;
+        border-radius: 12px;
+        width: 480px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+    button {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        margin-top: 10px;
+        background: #3b82f6;
+        color: white;
+        font-weight: bold;
+    }
+    #answerInput {
+        width: 100%;
+        padding: 10px;
+        margin-top: 12px;
+        border-radius: 6px;
+        border: none;
+        font-size: 16px;
+    }
+    #result {
+        font-size: 18px;
+        margin-top: 12px;
+        height: 30px;
+    }
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="top">
-      <div>
-        <h1>高中數學題目產生器</h1>
-        <div class="small">題型：指數/對數、三角（多種題型）與機率。題目前會明確寫出題意（例如「求 x 的值」、「求 sin(30°)」）。</div>
-      </div>
 
-      <div class="controls">
-        <label>題型：
-          <select id="operation">
-            <option value="mixed">混合（隨機）</option>
-            <option value="exp">指數 / 對數</option>
-            <option value="trig">三角函數（含 1~4 類）</option>
-            <option value="prob">機率</option>
-          </select>
-        </label>
+<h1>高一數學自動出題系統</h1>
+<div id="card">
+    <h2 id="topic">題目類別</h2>
+    <div id="questionText">按「下一題」開始</div>
 
-        <label>難度：
-          <select id="difficulty">
-            <option value="easy">簡單</option>
-            <option value="medium" selected>中等</option>
-            <option value="hard">困難</option>
-          </select>
-        </label>
+    <input id="answerInput" type="text" placeholder="輸入答案後按 Enter">
+    <button id="nextBtn">下一題</button>
 
-        <label>題數：
-          <input id="count" type="number" min="1" max="50" value="10" />
-        </label>
-
-        <button id="generateBtn">產生題目</button>
-        <button id="resetBtn" class="ghost">重置</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div id="problemArea"><div class="small">按「產生題目」開始。輸入答案後按 Enter 自動送出並切下一題。</div></div>
-
-      <div class="stats">
-        <div>總題數：<span id="total">0</span></div>
-        <div>已作：<span id="done">0</span></div>
-        <div>答對：<span id="correct">0</span></div>
-        <div>正確率：<span id="rate">0%</span></div>
-      </div>
-    </div>
-
-    <footer>答案可用整數、小數、分數（a/b）、或 sqrt(...)。三角函數 exact 可用 √ 或 sqrt 表示（例如 √3/2 或 sqrt(3)/2）。tan 90° 等情形可輸入 undefined。</footer>
-  </div>
+    <div id="result"></div>
+</div>
 
 <script>
-/* ---------- 小工具 ---------- */
-function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-function gcd(a,b){ a=Math.abs(a);b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
-function simplifyFraction(n,d){ const g=gcd(n,d); return [n/g, d/g]; }
+/* ==============================
+   題庫（依你給的四大主題）
+   ============================== */
 
-/* 把使用者輸入 normalize，支援：1/2, sqrt(3)/2, √3/2, 0.5 */
-function normalizeInput(s){
-  if(!s && s!==0) return '';
-  s = String(s).trim();
-  s = s.replace(/，/g, ',');
-  s = s.replace(/√/g, 'sqrt');
-  s = s.replace(/\s+/g, '');
-  s = s.replace(/∕/g, '/');
-  return s;
-}
+function randomInt(a, b) { return Math.floor(Math.random()*(b-a+1))+a; }
+let usedQuestions = new Set();
 
-/* 解析輸入為數值（若能）：
-   支援 a/b, sqrt(n)/m, sqrt(n), numeric
-   回傳數值（Number）或 null 若不能解析 */
-function parseAnswerString(s){
-  s = normalizeInput(s);
-  if(s === '') return null;
-  // 'undefined' 特別處理在題目層
-  if(s.toLowerCase() === 'undefined' || s === 'undef') return 'undefined';
+function generateQuestion() {
+    const types = [1,2,3,4]; 
+    let type = types[randomInt(0, types.length-1)];
+    let q = {}, a;
 
-  // 嘗試直接轉數字
-  if(!isNaN(Number(s))) return Number(s);
+    /* ========= 1. 數與數線 ========= */
+    if (type === 1) {
+        const mode = randomInt(1,3);
 
-  // 分數或含 sqrt 的表達式：嘗試轉成 JS 可 eval 的數值
-  try {
-    // 安全替換 sqrt(x) -> Math.sqrt(x)
-    const expr = s.replace(/sqrt\(([^)]+)\)/g, 'Math.sqrt($1)');
-    // 禁止其他非數學字元（只留數字、Math.sqrt、+/-%().,/e）
-    if(/[^0-9Mathsqrt()+\-*/.%e,]/.test(expr)) {
-      // 允許 "/"、"."、"Math.sqrt" 以及數字；若有其他文字，視為不可解析
-    }
-    // 將逗號視為小數點或錯誤：先不處理
-    const val = Function('"use strict"; return (' + expr + ')')();
-    if(typeof val === 'number' && !isNaN(val) && isFinite(val)) return val;
-  } catch(e){}
-  // 若無法解析，回傳 null
-  return null;
-}
-
-/* 比較兩個數值（允許微小誤差） */
-function nearlyEqual(a,b,eps=1e-6){
-  return Math.abs(a-b) < eps;
-}
-
-/* ---------- 題目產生器設定（不重複） ---------- */
-function getRange(diff){
-  if(diff === 'easy') return {small:2, large:6};
-  if(diff === 'medium') return {small:2, large:12};
-  return {small:3, large:20};
-}
-
-/* 為了避免題目重複，定義每題的 signature（字串） */
-function signatureFor(obj){
-  // 簡單序列化代表題目的關鍵項
-  if(obj.type === 'exp') return `exp|${obj.form}|${obj.base||''}|${obj.x||''}|${obj.value||''}`;
-  if(obj.type === 'trig') return `trig|${obj.f}|${obj.angle}`;
-  if(obj.type === 'prob') return `prob|${obj.kind}|${(obj.params||[]).join(',')}`;
-  return 'other';
-}
-
-/* 主建構函式：根據選擇產生題目物件 */
-function makeProblem(type, difficulty){
-  const range = getRange(difficulty);
-  if(type === 'mixed'){
-    const pool = ['exp','trig','prob'];
-    type = pool[randInt(0,pool.length-1)];
-  }
-
-  if(type === 'exp'){
-    // 兩類：求 x（整數），或求 log 值
-    if(Math.random() < 0.5){
-      // a^x = b  -> 求 x (整數)
-      const base = randInt(2,5);
-      const x = randInt(1,5);
-      const b = Math.pow(base, x);
-      return {
-        type:'exp', form:'solve_x', title:'【指數】求 x 的值', instruction:`已知 ${base}^x = ${b}，請求出 x（整數）`, expr:`${base}^x = ${b}`, answer: x,
-        checkFn: (u) => {
-          const v = parseAnswerString(u);
-          return v !== null && v !== 'undefined' && nearlyEqual(Number(v), x);
-        },
-        base, x, value: b
-      };
-    } else {
-      // log_b(val) = ?
-      const base = randInt(2,5);
-      const k = randInt(1,6);
-      const val = Math.pow(base, k);
-      return {
-        type:'exp', form:'log_val', title:'【對數】求值', instruction:`求：log_${base}(${val})（請直接輸入數值）`, expr:`log_${base}(${val})`, answer: k,
-        checkFn: (u) => {
-          const v = parseAnswerString(u);
-          return v !== null && v !== 'undefined' && nearlyEqual(Number(v), k);
-        },
-        base, value: val
-      };
-    }
-  }
-
-  if(type === 'trig'){
-    // 解題類型：1. 基本角求值 2. 已知 sin 求 cos（給象限） 3. 化簡恆等式 4. 弧度（cos(pi/3)）
-    const sub = randInt(1,4);
-    // 常見角集合
-    const angles = [0,30,45,60,90,120,135,150,180];
-    if(sub === 1){
-      const angle = angles[randInt(0, angles.length-1)];
-      const funcs = ['sin','cos','tan'];
-      const f = funcs[randInt(0,funcs.length-1)];
-      return {
-        type:'trig', sub:1, f, angle,
-        title:`【三角(1)】基本三角函數求值`, instruction:`請輸入 ${f}(${angle}°) 的值（可使用 √ 或 sqrt 表示，例如 √3/2 / 1/2）。若無定義請輸入 undefined。`, expr:`${f}(${angle}°)`,
-        checkFn: (u) => trigCheck(f, angle, u)
-      };
-    } else if(sub === 2){
-      // 已知 sinθ = a/b，求 cosθ（給象限）
-      // 先生成簡單分數
-      const a = randInt(1,5);
-      const b = randInt(a+1,8);
-      // 隨機象限 1~4
-      const quadrant = randInt(1,4);
-      // sign of cos depends on quadrant
-      // sin = a/b, cos = ±sqrt(1 - (a/b)^2)
-      const sinVal = a / b;
-      const cosAbs = Math.sqrt(Math.max(0, 1 - sinVal*sinVal));
-      const cosVal = (quadrant === 1 || quadrant === 4) ? cosAbs : -cosAbs;
-      const sym = quadrant;
-      return {
-        type:'trig', sub:2, title:'【三角(2)】由 sin 求 cos（給定象限）',
-        instruction:`已知 sinθ = ${a}/${b}，且 θ 位於第 ${sym} 象限，請求 cosθ（請輸入簡化數值或 sqrt 表示）`,
-        expr:`sinθ = ${a}/${b}, θ 在第 ${sym} 象限，求 cosθ`,
-        answerExact: cosVal, // numeric
-        checkFn: (u) => {
-          const v = parseAnswerString(u);
-          if(v === null) return false;
-          return nearlyEqual(Number(v), cosVal);
+        if (mode === 1) { // 絕對值
+            let x = randomInt(-20,20);
+            q.text = `計算 |${x}|`;
+            a = Math.abs(x);
+            q.topic = "數與數線：絕對值";
         }
-      };
-    } else if(sub === 3){
-      // 恆等式化簡（簡單）
-      // e.g., sin^2 x + cos^2 x = 1
-      const forms = [
-        {expr:'sin^2 x + cos^2 x', ans:'1'},
-        {expr:'1 - sin^2 x', ans:'cos^2 x'},
-        {expr:'tan x - sin x / cos x', ans:'0'}, // tautology to check parsing not required
-      ];
-      const pick = forms[randInt(0, forms.length-1)];
-      return {
-        type:'trig', sub:3, title:'【三角(3)】三角恆等式化簡',
-        instruction:`化簡下列表達式（用數學簡潔形式回答，例如 1、cos^2 x、0）`,
-        expr: pick.expr,
-        answerExact: pick.ans,
-        checkFn: (u) => {
-          const s = normalizeInput(u).replace(/\^/g,'^');
-          const expected = normalizeInput(pick.ans);
-          // 允許多種等價字串：簡單直接比對 normalized
-          return s === expected || s === expected.replace(/sqrt/,'√');
+        else if (mode === 2) { // 數線距離
+            let a1 = randomInt(-15,15);
+            let b1 = randomInt(-15,15);
+            q.text = `在數線上，點 ${a1} 與 ${b1} 的距離為？`;
+            a = Math.abs(a1 - b1);
+            q.topic = "數與數線：距離";
         }
-      };
-    } else {
-      // 弧度制計算（如 cos(pi/3)）
-      const choices = [
-        {angleLabel:'π/6', deg:30},
-        {angleLabel:'π/4', deg:45},
-        {angleLabel:'π/3', deg:60},
-        {angleLabel:'π/2', deg:90}
-      ];
-      const pick = choices[randInt(0, choices.length-1)];
-      const funcs = ['sin','cos','tan'];
-      const f = funcs[randInt(0,funcs.length-1)];
-      return {
-        type:'trig', sub:4, title:'【三角(4)】弧度制計算',
-        instruction:`請計算 ${f}(${pick.angleLabel})（可用 exact 表示，如 √2/2）`,
-        expr:`${f}(${pick.angleLabel})`,
-        checkFn: (u) => trigCheck(f, pick.deg, u)
-      };
+        else { // 四則
+            let x = randomInt(-20,20);
+            let y = randomInt(-20,20);
+            let ops = [" + "," - "," × "," ÷ "];
+            let op = ops[randomInt(0,3)];
+            q.text = `計算：${x}${op}${y}`;
+            if (op === " + ") a = x+y;
+            if (op === " - ") a = x-y;
+            if (op === " × ") a = x*y;
+            if (op === " ÷ ") a = (y===0? "無解": (x/y));
+            q.topic = "數與數線：四則運算";
+        }
     }
-  }
 
-  if(type === 'prob'){
-    // 機率：擲骰（幾次至少/恰好），或抽球（不放回）
-    if(Math.random() < 0.5){
-      // 骰子 n 次
-      const n = randInt(1,4);
-      const face = randInt(1,6);
-      const kind = Math.random() < 0.5 ? '至少一次' : '恰好一次';
-      const pSingle = 1/6;
-      let prob = 0;
-      if(kind === '至少一次') prob = 1 - Math.pow(1-pSingle, n);
-      else prob = n * pSingle * Math.pow(1-pSingle, n-1);
-      return {
-        type:'prob', kind:'dice', title:'【機率】擲骰子',
-        instruction:`拋一個公平六面骰子 ${n} 次，求 ${kind} 出現點數 ${face} 的機率（請以最簡分數或小數表示）`,
-        expr:`${kind} 出現 ${face} 的機率（${n} 次）`,
-        answer: prob,
-        checkFn: (u) => {
-          const v = parseAnswerString(u);
-          return v !== null && nearlyEqual(Number(v), prob);
-        },
-        params: [n,face,kind]
-      };
-    } else {
-      // 抽球（不放回）
-      const red = randInt(1,6);
-      const blue = randInt(1,6);
-      const total = red + blue;
-      const want = Math.random() < 0.5 ? '紅球' : '藍球';
-      const prob = (want === '紅球') ? red/total : blue/total;
-      return {
-        type:'prob', kind:'urn', title:'【機率】抽球（不放回）',
-        instruction:`盒中有 ${red} 個紅球與 ${blue} 個藍球，隨機抽一個球，求抽到 ${want} 的機率（最簡分數或小數）`,
-        expr:`抽到 ${want} 的機率`,
-        answer: prob,
-        checkFn: (u) => {
-          const v = parseAnswerString(u);
-          return v !== null && nearlyEqual(Number(v), prob);
-        },
-        params: [red,blue,want]
-      };
+    /* ========= 2. 指數/對數 ========= */
+    if (type === 2) {
+        const mode = randomInt(1,2);
+
+        if (mode === 1) { // 指數運算
+            let a1 = randomInt(2,5);
+            let b1 = randomInt(2,4);
+            let c1 = randomInt(2,4);
+            q.text = `計算：${a1}^${b1} × ${a1}^${c1}`;
+            a = a1 ** (b1 + c1);
+            q.topic = "指數：運算";
+        }
+        else { // 對數（簡單）
+            let base = [2, 3, 5, 10][randomInt(0,3)];
+            let exp = randomInt(1,4);
+            q.text = `計算：log_${base}(${base**exp})`;
+            a = exp;
+            q.topic = "對數：基本性質";
+        }
     }
-  }
 
-  // fallback (shouldn't reach)
-  return {type:'other', title:'【題型】', instruction:'無題型', expr:'---', answer:null, checkFn:()=>false};
-}
+    /* ========= 3. 多項式函數 ========= */
+    if (type === 3) {
+        const mode = randomInt(1,3);
 
-/* ------- trig check helper: 比對 exact 或數值 ------- */
-function trigCheck(func, deg, userInput){
-  const degToRad = d => d * Math.PI / 180;
-  const val = (() => {
-    const r = degToRad(deg);
-    if(func === 'sin') return Math.sin(r);
-    if(func === 'cos') return Math.cos(r);
-    return Math.tan(r);
-  })();
-
-  const exactMap = {
-    'sin0':'0', 'cos0':'1',
-    'sin30':'1/2','cos30':'√3/2','tan30':'1/√3',
-    'sin45':'√2/2','cos45':'√2/2','tan45':'1',
-    'sin60':'√3/2','cos60':'1/2','tan60':'√3',
-    'sin90':'1','cos90':'0','tan90':'undefined',
-    'sin120':'√3/2','cos120':'-1/2',
-    'sin135':'√2/2','cos135':'-√2/2',
-    'sin150':'1/2','cos150':'-√3/2',
-    'sin180':'0','cos180':'-1'
-  };
-  const key = func + String(deg);
-  const exact = exactMap[key] || null;
-
-  const u = normalizeInput(userInput);
-  if(u === '') return false;
-  if(u === 'undefined') return (func === 'tan' && (deg%180 === 90));
-  // accept exact forms
-  if(exact){
-    const normalizedExact = exact.replace(/√/g,'sqrt').replace(/\s+/g,'');
-    const uNorm = u.replace(/√/g,'sqrt').replace(/\s+/g,'');
-    // also accept different sqrt formats (sqrt(3)/2 etc)
-    if(uNorm === normalizedExact) return true;
-    // try numeric parse
-  }
-  const p = parseAnswerString(u);
-  if(p === null) return false;
-  if(!isFinite(p)) return false;
-  return nearlyEqual(p, val, 1e-6);
-}
-
-/* ---------- 確保題目不重複：產生題組 ---------- */
-function generateUniqueSet(type, difficulty, count){
-  const set = new Set();
-  const problems = [];
-  let attempts = 0;
-  const maxAttempts = count * 10 + 200;
-  while(problems.length < count && attempts < maxAttempts){
-    attempts++;
-    const p = makeProblem(type, difficulty);
-    const sig = signatureFor(p);
-    if(!set.has(sig)){
-      set.add(sig);
-      problems.push(p);
+        if (mode === 1) { // 因式分解 ax^2 + bx
+            let a1 = randomInt(1,5);
+            let b1 = randomInt(1,8);
+            q.text = `因式分解：${a1}x² + ${b1}x`;
+            a = `${xCommon(a1,b1)}x(${a1/xCommon(a1,b1)}x + ${b1/xCommon(a1,b1)})`;
+            q.topic = "多項式：因式分解";
+        }
+        else if (mode === 2) { // 函數值
+            let m = randomInt(-5,5);
+            let b = randomInt(-5,5);
+            let x = randomInt(-4,4);
+            q.text = `已知 f(x) = ${m}x + ${b}，求 f(${x})`;
+            a = m*x + b;
+            q.topic = "函數：一次函數值";
+        }
+        else { // 不等式
+            let a1 = randomInt(1,5);
+            let b1 = randomInt(-5,5);
+            q.text = `解不等式：${a1}x + ${b1} > 0`;
+            a = `x > ${(-b1)/a1}`;
+            q.topic = "多項式：一次不等式";
+        }
     }
-  }
-  return problems;
-}
 
-/* ---------- UI 與流程管理 ---------- */
-let problems = [], idx = 0;
-let stats = {total:0, done:0, correct:0};
+    /* ========= 4. 直線與圓 ========= */
+    if (type === 4) {
+        const mode = randomInt(1,3);
 
-function renderCurrent(){
-  const area = document.getElementById('problemArea');
-  area.innerHTML = '';
-  if(problems.length === 0){
-    area.innerHTML = '<div class="small">請按「產生題目」開始。</div>';
-    updateStats();
-    return;
-  }
-  const p = problems[idx];
-  const card = document.createElement('div');
-  card.className = 'problemCard';
-  card.innerHTML = `
-    <div class="title">${p.title}</div>
-    <div class="expr">${p.expr}</div>
-    <div class="hint">${p.instruction}</div>
-    <input id="userAnswer" placeholder="輸入答案後按 Enter（支援小數、分數、sqrt()）" autocomplete="off" />
-    <div id="fb" class="feedback" style="display:none"></div>
-  `;
-  area.appendChild(card);
-
-  const input = document.getElementById('userAnswer');
-  input.focus();
-  // Enter 送出
-  input.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter'){ e.preventDefault(); submitAnswer(); }
-  });
-}
-
-function submitAnswer(){
-  const p = problems[idx];
-  const input = document.getElementById('userAnswer');
-  const fb = document.getElementById('fb');
-  if(!input) return;
-  const raw = input.value;
-  const result = p.checkFn(raw);
-  let ok = false;
-  if(typeof result === 'boolean') ok = result;
-  else if(result && typeof result === 'object' && 'ok' in result) ok = result.ok;
-
-  fb.style.display = 'block';
-  if(ok){
-    fb.textContent = '✔ 正確';
-    fb.className = 'feedback ok';
-    stats.correct++;
-  } else {
-    let trueAns = '';
-    if(p.answer !== undefined && p.answer !== null) trueAns = String(p.answer);
-    if(p.answerExact) trueAns = String(p.answerExact);
-    // 若是 trig exact mapping, show that if present
-    if(p.type === 'trig' && p.answerExact && !trueAns) trueAns = p.answerExact;
-    fb.textContent = trueAns ? ('✘ 錯誤，正確答案：' + trueAns) : '✘ 錯誤';
-    fb.className = 'feedback bad';
-  }
-  stats.done++;
-  updateStats();
-
-  // 短暫延遲後換下一題或結束
-  setTimeout(()=>{
-    idx++;
-    if(idx >= problems.length){
-      showSummary();
-      return;
+        if (mode === 1) { // 斜率
+            let x1 = randomInt(-5,5);
+            let y1 = randomInt(-5,5);
+            let x2 = randomInt(-5,5);
+            let y2 = randomInt(-5,5);
+            q.text = `求通過 (${x1},${y1}) 和 (${x2},${y2}) 的直線斜率`;
+            a = (x2===x1? "無斜率": ( (y2-y1)/(x2-x1) ));
+            q.topic = "直線：斜率";
+        }
+        else if (mode === 2) { // 判斷是否在直線上
+            let m = randomInt(-4,4);
+            let b = randomInt(-4,4);
+            let x = randomInt(-4,4);
+            let y = m*x + b;
+            q.text = `判斷點 (${x},${y}) 是否在 y=${m}x+${b} 上（回答：是 或 否）`;
+            a = "是";
+            q.topic = "直線：點在線上";
+        }
+        else { // 圓
+            let h = randomInt(-4,4), k = randomInt(-4,4), r = randomInt(2,6);
+            let x = randomInt(-4,4), y = randomInt(-4,4);
+            q.text = `已知圓心 (${h},${k})、半徑 ${r}，判斷點 (${x},${y}) 是否在圓內（回答：是 或 否）`;
+            let dist = Math.sqrt((x-h)**2 + (y-k)**2);
+            a = dist <= r ? "是" : "否";
+            q.topic = "圓：點是否在圓內";
+        }
     }
-    renderCurrent();
-  }, 600);
+
+    // 把正確答案存起來
+    currentAnswer = a;
+    return q;
 }
 
-function showSummary(){
-  const area = document.getElementById('problemArea');
-  area.innerHTML = '';
-  const card = document.createElement('div');
-  card.className = 'problemCard';
-  const rate = stats.total ? Math.round((stats.correct / stats.total) * 100) : 0;
-  card.innerHTML = `
-    <div class="title">全部完成！</div>
-    <div class="expr">你完成了 ${stats.total} 題</div>
-    <div class="hint">答對 ${stats.correct} 題，正確率 ${rate}%</div>
-    <div style="margin-top:12px"><button id="again">再出一組（相同設定）</button></div>
-  `;
-  area.appendChild(card);
-  document.getElementById('again').addEventListener('click', ()=>{
-    // 再次產生相同題數、題型、難度（重新產生不重複題組）
-    document.getElementById('generateBtn').click();
-  });
+function xCommon(a,b){
+    for(let i=Math.min(a,b);i>=1;i--){
+        if(a%i===0 && b%i===0) return i;
+    }
+    return 1;
 }
 
-/* ---------- 控制按鈕 ---------- */
-document.getElementById('generateBtn').addEventListener('click', ()=>{
-  const op = document.getElementById('operation').value;
-  const diff = document.getElementById('difficulty').value;
-  let count = parseInt(document.getElementById('count').value) || 10;
-  if(count < 1) count = 1; if(count > 50) count = 50;
-  problems = generateUniqueSet(op, diff, count);
-  idx = 0;
-  stats = {total: problems.length, done:0, correct:0};
-  renderCurrent();
-  updateStats();
+/* ==============================
+   主功能：出題、批改、Enter
+   ============================== */
+
+let currentAnswer = null;
+
+function newQuestion() {
+    let q = generateQuestion();
+    document.getElementById("topic").textContent = q.topic;
+    document.getElementById("questionText").textContent = q.text;
+    document.getElementById("result").textContent = "";
+    document.getElementById("answerInput").value = "";
+    document.getElementById("answerInput").focus();
+}
+
+document.getElementById("nextBtn").onclick = newQuestion;
+
+document.getElementById("answerInput").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+        checkAnswer();
+        setTimeout(newQuestion, 600);
+    }
 });
 
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  problems = []; idx = 0; stats = {total:0, done:0, correct:0};
-  document.getElementById('problemArea').innerHTML = '<div class="small">已重置，請按「產生題目」開始。</div>';
-  updateStats();
-});
+function checkAnswer(){
+    let user = document.getElementById("answerInput").value.trim();
 
-function updateStats(){
-  document.getElementById('total').textContent = stats.total || 0;
-  document.getElementById('done').textContent = stats.done || 0;
-  document.getElementById('correct').textContent = stats.correct || 0;
-  const rate = stats.total ? Math.round((stats.correct / stats.total) * 100) : 0;
-  document.getElementById('rate').textContent = rate + '%';
+    if(user === currentAnswer.toString()){
+        document.getElementById("result").textContent = "✔ 正確！";
+        document.getElementById("result").style.color = "#4ade80";
+    } else {
+        document.getElementById("result").textContent = "✘ 錯誤，正確答案是：" + currentAnswer;
+        document.getElementById("result").style.color = "#f87171";
+    }
 }
-
-/* ---------- 預設：等待使用者按產生 ---------- */
 
 </script>
+
 </body>
 </html>
