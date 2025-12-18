@@ -1,198 +1,168 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>數學出題器</title>
-
+<title>數學隨機出題系統</title>
 <style>
-body{
-  margin:0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background:#eef2f7;
-  display:flex;
-  justify-content:center;
-  padding:40px;
-}
-.container{
-  background:white;
-  width:900px;
-  padding:40px;
-  border-radius:20px;
-  box-shadow:0 12px 35px rgba(0,0,0,.15);
-}
-h1{
-  font-size:36px;
-  margin-bottom:20px;
-}
-select,button,input{
-  font-size:24px;
-  padding:12px;
-  margin-top:12px;
-}
-button{
-  cursor:pointer;
-}
-.question{
-  margin-top:30px;
-  font-size:30px;
-  line-height:1.5;
-}
-.feedback{
-  margin-top:12px;
-  font-size:24px;
-}
-.correct{color:green;}
-.wrong{color:red;}
+  body {
+    font-family: "Noto Serif TC", serif;
+    background: #f5f5f5;
+    padding: 40px;
+  }
+  .box {
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  select, button, input {
+    font-size: 20px;
+    padding: 10px;
+    margin-top: 10px;
+  }
+  .question {
+    font-size: 24px;
+    line-height: 1.8;
+    margin-top: 30px;
+    white-space: pre-line;
+  }
+  .answer {
+    margin-top: 20px;
+  }
+  .result {
+    font-size: 22px;
+    margin-top: 15px;
+  }
 </style>
 </head>
 
 <body>
+<div class="box">
+  <h1>數學隨機出題系統</h1>
 
-<div class="container">
-  <h1>數學出題器</h1>
-
+  <label>選擇章節：</label><br>
   <select id="topic">
     <option value="exp">① 指數與根式</option>
     <option value="log">② 對數</option>
-    <option value="poly">③ 多項式與函數</option>
-    <option value="ineq">④ 不等式</option>
+    <option value="func">③ 多項式與函數</option>
+    <option value="ineq">④ 不等式（含絕對值）</option>
     <option value="word">⑤ 數學文字題</option>
     <option value="geo">⑥ 幾何（直線與圓）</option>
-  </select><br>
-
-  <button onclick="generate()">開始出題</button>
+  </select>
+  <br>
+  <button onclick="newQuestion()">開始出題</button>
 
   <div class="question" id="question"></div>
 
-  <input id="answer" placeholder="輸入答案後按 Enter">
-  <div class="feedback" id="feedback"></div>
+  <div class="answer">
+    <input id="userAnswer" placeholder="輸入答案後按 Enter">
+  </div>
+
+  <div class="result" id="result"></div>
 </div>
 
 <script>
-let correctAnswer = null;
+let correctAnswer = "";
 
-function rand(a,b){
-  return Math.floor(Math.random()*(b-a+1))+a;
-}
-
-function parseAnswer(s){
-  s=s.trim();
-  if(s.includes("/")){
-    let [a,b]=s.split("/");
-    return Number(a)/Number(b);
-  }
-  return Number(s);
-}
-
-document.getElementById("answer").addEventListener("keydown",e=>{
-  if(e.key==="Enter") check();
+document.getElementById("userAnswer").addEventListener("keydown", e => {
+  if (e.key === "Enter") check();
 });
 
-function generate(){
-  const topic=document.getElementById("topic").value;
-  const q=document.getElementById("question");
-  document.getElementById("feedback").textContent="";
-  document.getElementById("answer").value="";
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
-  /* ① 指數與根式 */
-  if(topic==="exp"){
-    const pool=[
-      ()=>{let a=rand(3,6),b=rand(1,3);
-        q.innerHTML=`化簡：2<sup>${a}</sup> ÷ 2<sup>${b}</sup>`;
-        correctAnswer=Math.pow(2,a-b);},
+function newQuestion(){
+  document.getElementById("result").textContent="";
+  document.getElementById("userAnswer").value="";
+  const t = document.getElementById("topic").value;
 
-      ()=>{let a=rand(1,3);
-        q.innerHTML=`化簡：2<sup>-${a}</sup> × 4`;
-        correctAnswer=Math.pow(2,-a+2);},
-
-      ()=>{let a=rand(2,6);
-        q.innerHTML=`化簡：√(2<sup>${a}</sup>)`;
-        correctAnswer=Math.pow(2,a/2);},
-
-      ()=>{q.innerHTML=`化簡：√18 ÷ (2√2)`; correctAnswer=1.5;},
-
-      ()=>{let a=rand(2,4);
-        q.innerHTML=`化簡：2 × √(2<sup>${a}</sup>)`;
-        correctAnswer=2*Math.pow(2,a/2);}
-    ];
-    pool[rand(0,pool.length-1)]();
-  }
-
-  /* ② 對數 */
-  if(topic==="log"){
-    const pool=[
-      ()=>{q.innerHTML=`解方程：log(x−1)+log(x−2)=1`; correctAnswer=13;},
-      ()=>{let a=rand(2,4);
-        q.innerHTML=`求值：log<sub>2</sub>(2<sup>${a}</sup>)`;
-        correctAnswer=a;},
-      ()=>{q.innerHTML=`已知 log2 ≈ 0.3010，求 10<sup>log2</sup>`; correctAnswer=2;}
-    ];
-    pool[rand(0,pool.length-1)]();
-  }
-
-  /* ③ 多項式與函數 */
-  if(topic==="poly"){
-    const pool=[
-      ()=>{let a=rand(1,3);
-        q.innerHTML=`若 x=1 為 f(x)=x³−${3*a}x²+ax−1 的重根，求 a`;
-        correctAnswer=a;},
-      ()=>{q.innerHTML=`求最大值：y=−x²+4x−1`; correctAnswer=3;},
-      ()=>{let k=rand(1,4);
-        q.innerHTML=`比較 f(${k}) 與 f(${k+1})，其中 f(x)=x²−3x（輸入 1 或 2）`;
-        correctAnswer=
-          (k*k-3*k > (k+1)*(k+1)-3*(k+1)) ? 1 : 2;}
-    ];
-    pool[rand(0,pool.length-1)]();
-  }
-
-  /* ④ 不等式 */
-  if(topic==="ineq"){
-    const pool=[
-      ()=>{q.innerHTML=`解 |x−2|≤3（輸入最小解）`; correctAnswer=-1;},
-      ()=>{q.innerHTML=`解 |2x−1|≥3（輸入最小解）`; correctAnswer=2;},
-      ()=>{q.innerHTML=`解 x²−4x−5≥0（輸入最小解）`; correctAnswer=-1;}
-    ];
-    pool[rand(0,pool.length-1)]();
-  }
-
-  /* ⑤ 文字題 */
-  if(topic==="word"){
-    const pool=[
-      ()=>{let a=rand(5,7);
-        q.innerHTML=`3<sup>${a}</sup> 為幾位數？`;
-        correctAnswer=Math.floor(a*Math.log10(3))+1;},
-      ()=>{q.innerHTML=`比較 2×10⁵ 與 5×10⁴，較大者輸入 1`; correctAnswer=1;}
-    ];
-    pool[rand(0,pool.length-1)]();
-  }
-
-  /* ⑥ 幾何 */
-  if(topic==="geo"){
-    const pool=[
-      ()=>{let r0=rand(3,6);
-        q.innerHTML=`圓 x²+y²=${r0*r0} 與 y=2x+1 的交點數`;
-        correctAnswer=2;},
-      ()=>{q.innerHTML=`點 (3,4) 到 x=0 的距離`; correctAnswer=3;},
-      ()=>{q.innerHTML=`圓心(0,0)，半徑5，點(6,0)在圓的何處？(1外 2上 3內)`; correctAnswer=1;}
-    ];
-    pool[rand(0,pool.length-1)]();
-  }
+  if(t==="exp") expQ();
+  if(t==="log") logQ();
+  if(t==="func") funcQ();
+  if(t==="ineq") ineqQ();
+  if(t==="word") wordQ();
+  if(t==="geo") geoQ();
 }
 
 function check(){
-  const user=parseAnswer(document.getElementById("answer").value);
-  if(isNaN(user))return;
-  const fb=document.getElementById("feedback");
-  if(Math.abs(user-correctAnswer)<1e-6){
-    fb.textContent="✔ 正確";
-    fb.className="feedback correct";
-    setTimeout(generate,700);
-  }else{
-    fb.textContent="✘ 錯誤";
-    fb.className="feedback wrong";
-  }
+  const u = document.getElementById("userAnswer").value.trim();
+  document.getElementById("result").textContent =
+    (u===correctAnswer) ? "✔ 正確" : "✘ 錯誤，正確答案為：" + correctAnswer;
+  setTimeout(newQuestion, 800);
+}
+
+/* ① 指數與根式 */
+function expQ(){
+  const a=rand(2,5), b=rand(3,6), c=rand(1,3);
+  document.getElementById("question").textContent =
+`化簡下列式子：
+( √(${a*a*b}) ) ÷ ( ${a}√${b} )`;
+  correctAnswer = "1";
+}
+
+/* ② 對數 */
+function logQ(){
+  const x=rand(2,4), y=rand(3,5);
+  document.getElementById("question").textContent =
+`已知：
+log ${x*y} = log ${x} + log ${y}
+
+請求 log ${x} + log ${y} 的值`;
+  correctAnswer = "log"+x+"+log"+y;
+}
+
+/* ③ 函數比較 */
+function funcQ(){
+  const a=rand(-3,3), b=rand(-5,5);
+  document.getElementById("question").textContent =
+`已知函數：
+f(x)=x²${b>=0?"+":""}${b}x${a>=0?"+":""}${a}
+
+比較 f(4) 與 f(5) 的大小：
+1️⃣ f(4) > f(5)
+2️⃣ f(5) > f(4)`;
+  const f4=16+4*b+a;
+  const f5=25+5*b+a;
+  correctAnswer = f4>f5 ? "1":"2";
+}
+
+/* ④ 不等式 */
+function ineqQ(){
+  const a=rand(1,4), b=rand(2,6);
+  document.getElementById("question").textContent =
+`解下列不等式：
+| ${a}x − ${b} | ≥ ${a+b}
+
+請寫出解集（例如：x ≥ 3 或 x ≤ -1）`;
+  correctAnswer = "x≥"+((b+(a+b))/a);
+}
+
+/* ⑤ 文字題 */
+function wordQ(){
+  const a=rand(2,4);
+  document.getElementById("question").textContent =
+`某數以科學記號表示為：
+${a}.5 × 10³
+
+請問此數共有幾位數？`;
+  correctAnswer = "4";
+}
+
+/* ⑥ 幾何 */
+function geoQ(){
+  const r=rand(3,6);
+  document.getElementById("question").textContent =
+`圓 C 的方程式為：
+x² + y² = ${r*r}
+
+判斷圓心到原點距離為多少`;
+  correctAnswer = "0";
 }
 </script>
-
 </body>
 </html>
