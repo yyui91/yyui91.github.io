@@ -1,272 +1,117 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>數學題庫練習（完整版）</title>
-<!-- MathJax -->
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<meta charset="UTF-8">
+<title>數學出題器</title>
 <style>
-  :root{ --bg:#071226; --card:#0b1320; --muted:#9aa4b2; --accent:#60a5fa; --ok:#34d399; --err:#fb7185; }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:#e8eef6;font-family: 'Noto Sans TC', system-ui; padding:24px;font-size:20px}
-  .wrap{max-width:980px;margin:0 auto}
-  .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
-  h1{margin:0 0 10px;font-size:32px}
-  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  select,input,button,textarea{font-size:18px}
-  select,input[type=text]{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
-  button{padding:10px 14px;border-radius:8px;border:0;background:linear-gradient(90deg,var(--accent),#3b82f6);color:#042033;cursor:pointer}
-  .grid{display:grid;grid-template-columns:320px 1fr;gap:14px;margin-top:16px}
-  @media(max-width:900px){.grid{grid-template-columns:1fr}}
-  .side .section{margin-bottom:12px}
-  .qexpr{font-size:24px;font-weight:700;margin:12px 0}
-  .hint{color:var(--muted);font-size:14px}
-  input.answer{width:100%;padding:12px;font-size:20px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
-  .feedback{margin-top:10px;font-weight:700}
-  .feedback.ok{color:var(--ok)}
-  .feedback.bad{color:var(--err)}
-  .record{max-height:240px;overflow:auto;padding:8px;border-radius:8px;border:1px dashed rgba(255,255,255,0.03);background:rgba(255,255,255,0.01)}
-  footer{margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+  body{
+    font-family: system-ui, sans-serif;
+    background:#f3f4f6;
+    padding:40px;
+  }
+  .box{
+    max-width:800px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,.1);
+  }
+  h1{font-size:32px;margin-bottom:20px}
+  button{
+    font-size:20px;
+    padding:12px 28px;
+    border-radius:12px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+  }
+  .q{
+    margin-top:30px;
+    font-size:24px;
+  }
+  input{
+    font-size:22px;
+    padding:10px;
+    width:100%;
+    margin-top:20px;
+  }
+  .result{
+    margin-top:15px;
+    font-size:20px;
+    font-weight:bold;
+  }
 </style>
 </head>
+
 <body>
-<div class="wrap">
-  <div class="card">
-    <div class="row" style="justify-content:space-between">
-      <div>
-        <h1>數學題庫練習（進階題型）</h1>
-        <div class="hint">題型：指數/根式、對數、 多項式/函數、不等式、科學記號、直線與圓。輸入後按 Enter 自動批改並跳下一題。</div>
-      </div>
-      <div class="hint">按 Enter 提交 • 字體放大版</div>
-    </div>
+<div class="box">
+  <h1>數學出題器</h1>
+  <button id="start">開始出題</button>
 
-    <div class="grid">
-      <aside class="side">
-        <div class="section card" style="padding:12px">
-          <div style="margin-bottom:8px">選擇章節（至少一項）</div>
-          <label><input type="checkbox" class="chap" value="1" checked> ① 指數與根式</label><br>
-          <label><input type="checkbox" class="chap" value="2" checked> ② 對數</label><br>
-          <label><input type="checkbox" class="chap" value="3" checked> ③ 多項式/函數</label><br>
-          <label><input type="checkbox" class="chap" value="4" checked> ④ 不等式（含絕對值）</label><br>
-          <label><input type="checkbox" class="chap" value="5" checked> ⑤ 文字題（科學記號／成長率）</label><br>
-          <label><input type="checkbox" class="chap" value="6" checked> ⑥ 幾何（直線/圓）</label>
+  <div class="q" id="question"></div>
 
-          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.04);margin:10px 0">
+  <input id="answer" placeholder="輸入答案後按 Enter" disabled>
 
-          <div style="margin-bottom:8px">題數（組）<input id="groupCount" type="number" value="15" min="1" max="200" style="width:90px;margin-left:8px"></div>
-          <label><input id="timerEnable" type="checkbox"> 啟用計時（分鐘）</label>
-          <input id="timerMin" type="number" value="30" style="width:90px;margin-top:8px">
-
-          <div style="margin-top:10px;display:flex;gap:8px">
-            <button id="startBtn">開始出題</button>
-            <button id="resetBtn" class="ghost">重置</button>
-          </div>
-        </div>
-
-        <div class="section card" style="padding:12px">
-          <div class="hint">測驗統計</div>
-          <div>總題：<span id="statTotal">0</span></div>
-          <div>已作：<span id="statDone">0</span></div>
-          <div>答對：<span id="statCorrect">0</span></div>
-          <div>正確率：<span id="statRate">0%</span></div>
-          <div id="timerRead" class="hint">計時：未啟用</div>
-          <div style="margin-top:8px"><button id="exportBtn" class="ghost">匯出紀錄 (CSV)</button> <button id="clearRec" class="ghost">清除紀錄</button></div>
-        </div>
-
-        <div class="section card" style="padding:12px">
-          <div class="hint">答題紀錄（最近 200 筆）</div>
-          <div id="record" class="record">尚無紀錄</div>
-        </div>
-      </aside>
-
-      <main>
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div id="qTitle" class="hint">題型</div>
-            <div id="qIndex" class="hint">第 0 / 0 題</div>
-          </div>
-
-          <div id="qExpr" class="qexpr">按「開始出題」以取得題目</div>
-          <div id="qHint" class="hint"></div>
-
-          <div style="margin-top:8px" class="inputRow">
-            <input id="userInput" class="answer" type="text" placeholder="輸入答案（支援分數 a/b、sqrt()、√、科學記號），按 Enter 送出">
-            <button id="submitBtn">提交</button>
-          </div>
-
-          <div id="feedback" class="feedback" style="display:none"></div>
-
-          <div style="margin-top:10px" class="hint">系統會自動接受等價數值（如 1/2 = 0.5），部分代數題採字串正規化比對；證明或步驟題會標示為人工閱卷。</div>
-        </div>
-      </main>
-    </div>
-
-    <footer>若希望調整判題寬鬆度或新增固定題庫（老師出題），告訴我即可。</footer>
-  </div>
+  <div class="result" id="result"></div>
 </div>
 
 <script>
-/* Utilities */
-function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-function pick(arr){ return arr[randInt(0,arr.length-1)]; }
-function nearlyEqual(a,b,eps=1e-6){ return Math.abs(Number(a)-Number(b)) < eps; }
-function normalizeInput(s){ if(s===null||s===undefined) return ''; s=String(s).trim(); s=s.replace(/，/g,','); s=s.replace(/√/g,'sqrt'); s=s.replace(/\s+/g,''); s=s.replace(/∕/g,'/'); return s; }
-
-function parseAnswerString(s){
-  s = normalizeInput(s);
-  if(s==='') return null;
-  if(s.toLowerCase()==='undefined' || s==='undef') return 'undefined';
-  if(/^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(s)) return Number(s);
-  if(s.includes('/')){
-    const p = s.split('/'); if(p.length===2){ const a=Number(p[0]), b=Number(p[1]); if(!isNaN(a)&&!isNaN(b)&&b!==0) return a/b; }
+const problems = [
+  {
+    q:"化簡 √(12) + √(27)",
+    a:"5√3"
+  },
+  {
+    q:"解對數方程 log₂(x − 1) = 3",
+    a:"9"
+  },
+  {
+    q:"判斷 x³ − 4x² + x + 6 是否可被 (x − 2) 整除",
+    a:"是"
+  },
+  {
+    q:"解不等式 |2x − 3| ≥ 5",
+    a:"x≤-1 或 x≥4"
+  },
+  {
+    q:"比較 3.2×10⁵ 與 4.1×10⁴ 的大小",
+    a:"前者較大"
+  },
+  {
+    q:"圓 (x−1)²+(y+2)²=9 與直線 x−2y+5=0 是否相交",
+    a:"相交"
   }
-  try{
-    const expr = s.replace(/sqrt\(([^)]+)\)/g,'Math.sqrt($1)');
-    const expr2 = expr.replace(/([0-9\)\.e]+)\^([0-9\(\.e]+)/g,'Math.pow($1,$2)');
-    const val = Function('"use strict";return ('+expr2+')')();
-    if(typeof val==='number' && isFinite(val)) return val;
-  }catch(e){}
-  return null;
+];
+
+let current;
+
+const qEl = document.getElementById("question");
+const aEl = document.getElementById("answer");
+const rEl = document.getElementById("result");
+
+document.getElementById("start").addEventListener("click", newQuestion);
+
+aEl.addEventListener("keydown", e=>{
+  if(e.key==="Enter") check();
+});
+
+function newQuestion(){
+  current = problems[Math.floor(Math.random()*problems.length)];
+  qEl.textContent = current.q;
+  rEl.textContent = "";
+  aEl.value="";
+  aEl.disabled=false;
+  aEl.focus();
 }
 
-/* Records */
-function pushRecord(obj){ const arr = JSON.parse(localStorage.getItem('practice_records')||'[]'); arr.unshift(obj); if(arr.length>200) arr.pop(); localStorage.setItem('practice_records', JSON.stringify(arr)); renderRecords(); }
-function renderRecords(){ const arr = JSON.parse(localStorage.getItem('practice_records')||'[]'); const el = document.getElementById('record'); el.innerHTML=''; if(arr.length===0){ el.textContent='尚無紀錄'; return;} arr.forEach(r=>{ const d=document.createElement('div'); d.className='small'; d.style.marginBottom='6px'; d.textContent = `${r.time} | ${r.title} | 答:${r.user} | ${r.result}`; el.appendChild(d); }); }
-renderRecords();
-
-function exportCSV(){ const arr = JSON.parse(localStorage.getItem('practice_records')||'[]'); if(arr.length===0){ alert('無紀錄'); return; } let csv='時間,題目,使用者答案,結果\n'; arr.forEach(r=> csv += `"${r.time}","${r.title}","${String(r.user).replace(/"/g,'""')}","${r.result}"\n`); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='practice_records.csv'; a.click(); URL.revokeObjectURL(url); }
-
-/* Generators: strictly the 6 categories you requested (advanced B-level) */
-function makeId(pref){ return pref+'_'+Date.now().toString(36)+'_'+Math.floor(Math.random()*1e6); }
-
-/* 1 指數與根式 */
-function gen_exp_root(){
-  if(Math.random()<0.5){
-    const id=makeId('exp1');
-    return { id, title:'指數/根式 — 多層根式化簡', exprTex:'\\\\sqrt{5-2\\\\sqrt{6}}', hint:'設為 √a - √b，平方比較', answerValue: parseAnswerString('Math.sqrt(3)-Math.sqrt(2)'), answerTex:'\\\\sqrt{3}-\\\\sqrt{2}', check: function(u){ const v=parseAnswerString(u); if(v!==null) return nearlyEqual(v,this.answerValue); const s=normalizeInput(u); if(s==='sqrt(3)-sqrt(2)'||s==='√3-√2') return true; return false; } };
-  } else {
-    const id=makeId('exp2');
-    return { id, title:'指數/根式 — 指數混合化簡', exprTex:'\\\\frac{a^{-2}b^{3}}{ab^{-1}}', hint:'a冪相加減，b冪相加減', answerTex:'\\\\frac{b^{4}}{a^{3}}', check: function(u){ const s=normalizeInput(u); if(/b\\^?4\\/a\\^?3/.test(s) || /(b\\^4)\\/(a\\^3)/.test(s)) return true; return false; } };
-  }
+function check(){
+  const user = aEl.value.replace(/\s/g,"");
+  const ans = current.a.replace(/\s/g,"");
+  rEl.textContent = (user===ans) ? "✔ 正確" : "✘ 錯誤";
+  setTimeout(newQuestion,1000);
 }
-
-/* 2 對數 */
-function gen_log(){
-  if(Math.random()<0.5){
-    const id=makeId('log1');
-    return { id, title:'對數 — 換底表示', exprTex:'\\\\log_{2}3=a,\\\\log_{2}5=b\\\\;求\\\\log_{3}5', hint:'換底：log3 5 = log2 5 / log2 3', answerTex:'\\\\frac{b}{a}', check: function(u){ const s=normalizeInput(u); if(s==='b/a' || s==='b÷a' || s==='b/a') return true; return false; } };
-  } else {
-    const id=makeId('log2');
-    return { id, title:'對數 — 方程式', exprTex:'\\\\log_{2}(x+1)+\\\\log_{2}(x-1)=3', hint:'合併對數並檢查 domain', answerValue:3, answerTex:'3', check: function(u){ const v=parseAnswerString(u); if(v!==null) return nearlyEqual(v,3); return normalizeInput(u)==='3'; } };
-  }
-}
-
-/* 3 多項式與函數 */
-function gen_poly(){
-  const r = Math.random();
-  if(r<0.34){
-    const id=makeId('cubic');
-    return { id, title:'多項式 — 三次式因式判別', exprTex:'\\\\;f(x)=x^{3}-3x^{2}-4x+12', hint:'試整數根 (±1,±2,±3,±4,±6,±12)', answerTex:'(x-2)(x^{2}-x-6)', check: function(u){ const s=normalizeInput(u); if(/x-2/.test(s) && /x\\^?2-?x-?6/.test(s)) return true; return false; } };
-  } else if(r<0.67){
-    const id=makeId('quadmax');
-    return { id, title:'二次函數 — 最大值', exprTex:'\\\\;f(x)=-2x^{2}+4x+5', hint:'頂點', answerValue:7, answerTex:'7', check: function(u){ const v=parseAnswerString(u); if(v!==null) return nearlyEqual(v,7); return normalizeInput(u)==='7'; } };
-  } else {
-    const id=makeId('funccomp');
-    return { id, title:'函數比較（參數）', exprTex:'\\\\;f(x)=x^{2}-kx\\\\;若\\\\;f(3)<f(5),\\\\;求k範圍', hint:'代入比較', answerTex:'k<8', check: function(u){ const s=normalizeInput(u); if(s==='k<8' || s==='klt8' || s==='k<8') return true; return false; } };
-  }
-}
-
-/* 4 不等式 */
-function gen_ineq(){
-  if(Math.random()<0.5){
-    const id=makeId('abs');
-    return { id, title:'絕對值不等式', exprTex:'\\\\;|2x-3|\\\\le5', hint:'拆區間', answerTex:'[-1,4]', check: function(u){ const s=normalizeInput(u); if(s==='[-1,4]'||s==='-1<=x<=4'||s==='x\\\\in[-1,4]') return true; return false; } };
-  } else {
-    const id=makeId('quadineq');
-    return { id, title:'二次不等式', exprTex:'\\\\;x^{2}-4x-5<0', hint:'找根並判定', answerTex:'(-1,5)', check: function(u){ const s=normalizeInput(u); if(s==='(-1,5)'||s==='-1<x<5') return true; return false; } };
-  }
-}
-
-/* 5 文字題 */
-function gen_word(){
-  const r=Math.random();
-  if(r<0.34){
-    const id=makeId('sci');
-    const a=(randInt(2,9)+Math.round(Math.random()*99)/100);
-    const b=(randInt(2,9)+Math.round(Math.random()*99)/100);
-    const expA = randInt(3,6), expB = expA-1;
-    const bigger = (a*Math.pow(10,expA) > b*Math.pow(10,expB)) ? `${a.toFixed(2)}\\\\times10^{${expA}}` : `${b.toFixed(2)}\\\\times10^{${expB}}`;
-    return { id, title:'科學記號比較', exprTex:`\\\\;${a.toFixed(2)}\\\\times10^{${expA}}\\\\;與\\\\;${b.toFixed(2)}\\\\times10^{${expB}}\\\\;哪個較大？`, hint:'換成相同指數比較係數', answerTex:bigger, check: function(u){ const s=normalizeInput(u); if(normalizeInput(bigger)===s) return true; const v=parseAnswerString(u); if(v!==null) { const expVal = Math.max(a*Math.pow(10,expA), b*Math.pow(10,expB)); return nearlyEqual(v, expVal); } return false; } };
-  } else if(r<0.67){
-    const id=makeId('growth');
-    return { id, title:'成長率', exprTex:'每年成長20\\\\%，兩年後為原本的多少倍？', hint:'連乘', answerValue:1.44, answerTex:'1.44', check: function(u){ const v=parseAnswerString(u); if(v!==null) return nearlyEqual(v,1.44); return normalizeInput(u)==='1.44'; } };
-  } else {
-    const id=makeId('powdig');
-    return { id, title:'指數變化倍數', exprTex:'若 N=a\\\\times10^{b}，b 增加 3，問新數為原本的幾倍？', hint:'每增加 1 指數乘 10', answerTex:'1000', check: function(u){ const v=parseAnswerString(u); if(v!==null) return nearlyEqual(v,1000); return normalizeInput(u)==='1000'; } };
-  }
-}
-
-/* 6 幾何 */
-function gen_geo(){
-  if(Math.random()<0.5){
-    const id=makeId('circleRel');
-    const h1=randInt(-4,4), k1=randInt(-3,3), r1=randInt(2,6);
-    const h2=randInt(-4,4), k2=randInt(-3,3), r2=randInt(2,6);
-    const d=Math.hypot(h1-h2,k1-k2); const sumR=r1+r2; const diffR=Math.abs(r1-r2);
-    let rel;
-    if(Math.abs(d-sumR)<1e-6) rel='外切'; else if(Math.abs(d-diffR)<1e-6) rel='內切'; else if(d>sumR) rel='相離'; else if(d<diffR) rel='包含'; else rel='相交';
-    return { id, title:'圓心距判別', exprTex:`C_1:(x-${h1})^{2}+(y-${k1})^{2}=${r1}^{2},\\\\;C_2:(x-${h2})^{2}+(y-${k2})^{2}=${r2}^{2}`, hint:'計算中心距 d 與 r1±r2 比較', answerTex:rel, check: function(u){ return normalizeInput(u)===normalizeInput(rel); } };
-  } else {
-    const id=makeId('ptline');
-    const a=randInt(1,5), b=randInt(1,5), c=randInt(-10,10), x=randInt(-6,6), y=randInt(-6,6);
-    const val = Math.abs(a*x+b*y+c)/Math.hypot(a,b);
-    return { id, title:'點到直線距離', exprTex:`點(${x},${y})到${a}x+${b}y+(${c})=0的距離`, hint:'d=|ax0+by0+c|/√(a^2+b^2)', answerValue:val, answerTex:val.toString(), check: function(u){ const v=parseAnswerString(u); if(v!==null) return nearlyEqual(v,this.answerValue); return false; } };
-  }
-}
-
-/* Map chapters to generators */
-const chapterMap = {1: gen_exp_root, 2: gen_log, 3: gen_poly, 4: gen_ineq, 5: gen_word, 6: gen_geo};
-
-/* Generate non-duplicate set */
-function generateSet(selectedChaps, count){
-  const pool = [];
-  selectedChaps.forEach(ch=>{ if(chapterMap[ch]) pool.push(chapterMap[ch]); });
-  if(pool.length===0){ Object.values(chapterMap).forEach(fn=>pool.push(fn)); }
-  const set = [];
-  const sig = new Set(); let attempts=0;
-  while(set.length<count && attempts < count*25 + 300){ attempts++; const gen = pick(pool); const q = gen(); if(!sig.has(q.id)){ sig.add(q.id); set.push(q); } }
-  return set;
-}
-
-/* UI Flow */
-let questions=[], qIndex=0; let stats={total:0,done:0,correct:0}; let timerHandle=null;
-function updateStats(){ document.getElementById('statTotal').textContent = stats.total; document.getElementById('statDone').textContent = stats.done; document.getElementById('statCorrect').textContent = stats.correct; const rate = stats.total? Math.round((stats.correct/stats.total)*100):0; document.getElementById('statRate').textContent = rate + '%'; document.getElementById('qIndex').textContent = `第 ${qIndex+1} / ${questions.length} 題`; }
-
-function startTimer(mins){ if(timerHandle) clearInterval(timerHandle); if(!mins||mins<=0){ document.getElementById('timerRead').textContent='計時：未啟用'; return; } let sec = Math.floor(mins*60); document.getElementById('timerRead').textContent = `計時：${mins} 分`; timerHandle = setInterval(()=>{ sec--; const m=Math.floor(sec/60), s=sec%60; document.getElementById('timerRead').textContent = `計時：${m}分${s}秒`; if(sec<=0){ clearInterval(timerHandle); timerHandle=null; alert('時間到'); finish(); } },1000); }
-
-function renderQuestion(){ if(questions.length===0){ document.getElementById('qExpr').textContent='請按開始出題'; return; } if(qIndex>=questions.length){ finish(); return; } const q = questions[qIndex]; document.getElementById('qTitle').textContent = q.title; const exprEl = document.getElementById('qExpr'); exprEl.innerHTML = `\\(${q.exprTex}\\)`; if(window.MathJax && window.MathJax.typesetPromise){ MathJax.typesetClear(); MathJax.typesetPromise([exprEl]).catch(()=>{}); } document.getElementById('qHint').textContent = q.hint||''; document.getElementById('userInput').value=''; document.getElementById('feedback').style.display='none'; document.getElementById('userInput').focus(); updateStats(); }
-
-function submitAnswer(){ if(questions.length===0) return; const q = questions[qIndex]; const raw = document.getElementById('userInput').value.trim(); const fb = document.getElementById('feedback'); let ok=false; try{ const res=q.check(raw); if(typeof res==='boolean') ok=res; else if(res && typeof res==='object' && 'ok' in res) ok=res.ok; else ok=Boolean(res); }catch(e){ ok=false; }
-  if(ok){ fb.style.display='block'; fb.className='feedback ok'; fb.textContent='✔ 自動判定：正確'; stats.correct++; pushRecord({time:new Date().toLocaleString(), title:q.title, user:raw, result:'正確'}); } else { let ans = q.answerTex || (q.answerValue!==undefined? String(q.answerValue):'需人工閱卷'); fb.style.display='block'; fb.className='feedback bad'; fb.textContent='✘ 自動判定：錯誤；正確答案：'+ans; pushRecord({time:new Date().toLocaleString(), title:q.title, user:raw, result:'錯誤'}); }
-  stats.done++; updateStats(); setTimeout(()=>{ qIndex++; if(qIndex>=questions.length) finish(); else renderQuestion(); },700);
-}
-
-function finish(){ const fb=document.getElementById('feedback'); fb.style.display='block'; fb.className='feedback'; const rate = stats.total? Math.round((stats.correct/stats.total)*100):0; fb.textContent = `測驗結束：共 ${stats.total} 題，已做 ${stats.done}，答對 ${stats.correct}，正確率 ${rate}%`; }
-
-/* Bind UI */
-document.getElementById('startBtn').addEventListener('click', ()=>{ const checked = Array.from(document.querySelectorAll('.chap')).filter(c=>c.checked).map(c=>Number(c.value)); const count = Math.max(1, Math.min(200, Number(document.getElementById('groupCount').value)||12)); questions = generateSet(checked, count); qIndex=0; stats={total:questions.length,done:0,correct:0}; renderQuestion(); updateStats(); if(document.getElementById('timerEnable').checked){ startTimer(Math.max(1, Number(document.getElementById('timerMin').value)||30)); } else { if(timerHandle){ clearInterval(timerHandle); timerHandle=null; document.getElementById('timerRead').textContent='計時：未啟用'; } } });
-
-document.getElementById('submitBtn').addEventListener('click', submitAnswer);
-document.getElementById('userInput').addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); submitAnswer(); } });
-
-document.getElementById('resetBtn').addEventListener('click', ()=>{ questions=[]; qIndex=0; stats={total:0,done:0,correct:0}; renderQuestion(); updateStats(); document.getElementById('timerRead').textContent='計時：未啟用'; });
-
-document.getElementById('exportBtn').addEventListener('click', ()=>{ exportCSV(); });
-document.getElementById('clearRec').addEventListener('click', ()=>{ localStorage.removeItem('practice_records'); renderRecords(); alert('已清除紀錄'); });
-
-function exportCSV(){ const arr = JSON.parse(localStorage.getItem('practice_records')||'[]'); if(arr.length===0){ alert('無紀錄'); return; } let csv='時間,題目,使用者答案,結果\n'; arr.forEach(r=> csv += `"${r.time}","${r.title}","${String(r.user).replace(/"/g,'""')}","${r.result}"\n`); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='practice_records.csv'; a.click(); URL.revokeObjectURL(url); }
-
 </script>
 </body>
 </html>
