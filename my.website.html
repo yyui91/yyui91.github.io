@@ -2,27 +2,26 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>數學出題器</title>
+<title>數學隨機出題系統</title>
 <style>
 body{
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background:#f5f7fb;
+  font-family: system-ui, -apple-system;
+  background:#f4f6fb;
   padding:40px;
 }
 .card{
   max-width:900px;
   margin:auto;
-  background:white;
-  border-radius:16px;
-  padding:30px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  background:#fff;
+  border-radius:18px;
+  padding:32px;
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
 }
-h1{font-size:32px;margin-bottom:20px}
+h1{font-size:32px;margin-bottom:18px}
 select,button,input{
   font-size:22px;
   padding:10px 14px;
-  border-radius:10px;
-  border:1px solid #ccc;
+  border-radius:12px;
 }
 button{
   background:#2563eb;
@@ -31,19 +30,19 @@ button{
   cursor:pointer;
 }
 .problem{
-  margin-top:30px;
+  margin-top:28px;
   font-size:26px;
 }
 input{
-  width:300px;
+  width:320px;
   margin-top:20px;
 }
 .result{
   font-size:22px;
   margin-top:10px;
 }
-.good{color:green}
-.bad{color:red}
+.good{color:#16a34a}
+.bad{color:#dc2626}
 </style>
 </head>
 <body>
@@ -63,9 +62,7 @@ input{
 <button onclick="next()">開始 / 下一題</button>
 
 <div class="problem" id="q"></div>
-
 <input id="ans" placeholder="輸入答案後按 Enter">
-
 <div class="result" id="res"></div>
 </div>
 
@@ -75,7 +72,6 @@ const aEl = document.getElementById("ans");
 const rEl = document.getElementById("res");
 
 let currentCheck = ()=>false;
-
 const r=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 
 aEl.addEventListener("keydown",e=>{
@@ -97,54 +93,43 @@ function next(){
   aEl.value="";
   rEl.textContent="";
   const t=document.getElementById("topic").value;
-  if(t==="exp") expQ();
-  if(t==="log") logQ();
-  if(t==="poly") polyQ();
-  if(t==="ineq") ineqQ();
-  if(t==="word") wordQ();
-  if(t==="geo") geoQ();
+  ({exp:expQ,log:logQ,poly:polyQ,ineq:ineqQ,word:wordQ,geo:geoQ})[t]();
 }
 
-/* ① 指數與根式（多題型混合） */
+/* ① 指數與根式（全部老師格式） */
 function expQ(){
-  const type=r(1,5);
+  const type=r(1,4);
   if(type===1){
-    let a=r(2,5),m=r(2,6),n=r(1,5);
-    qEl.textContent=`化簡： (${a}^${m}) ÷ (${a}^${n})`;
+    let a=r(2,5),m=r(4,7),n=r(1,3);
+    qEl.textContent=`化簡： ${a}^${m} ÷ ${a}^${n}`;
     currentCheck=u=>Number(u)==Math.pow(a,m-n);
   }
   if(type===2){
-    let a=r(2,4),n=r(2,5);
-    qEl.textContent=`化簡： √(${a}^${2*n})`;
+    let a=r(2,4),n=r(2,4);
+    qEl.textContent=`化簡： √${Math.pow(a,2*n)}`;
     currentCheck=u=>Number(u)==Math.pow(a,n);
   }
   if(type===3){
     let a=r(2,5);
-    qEl.textContent=`化簡： ${a}^(-2) × ${a}^3`;
-    currentCheck=u=>Number(u)==a;
+    qEl.textContent=`化簡： 1 ÷ ${a}²`;
+    currentCheck=u=>Number(u)==1/Math.pow(a,2);
   }
   if(type===4){
-    let a=r(2,6);
-    qEl.textContent=`化簡： √(${a} + √${a})`;
-    currentCheck=u=>true; // 理論題，老師不給數值答案
-  }
-  if(type===5){
-    let x=r(1,4);
-    qEl.textContent=`解方程： 2^(x+1)=8，x=?`;
+    qEl.textContent=`已知 2^(x+1)=8，求 x`;
     currentCheck=u=>Number(u)==2;
   }
 }
 
-/* ② 對數 */
+/* ② 對數（無程式符號） */
 function logQ(){
   let a=r(2,5);
-  qEl.textContent=`計算： log_${a}(${a*a})`;
+  qEl.textContent=`計算： log${a} ${a*a}`;
   currentCheck=u=>Number(u)==2;
 }
 
-/* ③ 多項式與函數 */
+/* ③ 多項式 */
 function polyQ(){
-  let r1=r(-3,3)||1,r2=r(-3,3)||2;
+  let r1=r(-4,-1),r2=r(1,4);
   qEl.textContent=`已知 f(x)=(x-${r1})(x-${r2})，求零點`;
   currentCheck=u=>u.includes(r1)&&u.includes(r2);
 }
@@ -153,20 +138,20 @@ function polyQ(){
 function ineqQ(){
   let a=r(1,4);
   qEl.textContent=`解不等式： |x-${a}| ≥ 3`;
-  currentCheck=u=>true;
+  currentCheck=u=>u.length>0;
 }
 
 /* ⑤ 文字題 */
 function wordQ(){
-  let a=r(2,5),n=r(3,6);
-  qEl.textContent=`某數為 ${a}×10^${n}，共有幾位數？`;
+  let a=r(2,9),n=r(3,6);
+  qEl.textContent=`某數為 ${a}×10 的 ${n} 次方，共有幾位數？`;
   currentCheck=u=>Number(u)==n+1;
 }
 
 /* ⑥ 幾何 */
 function geoQ(){
   let r1=r(3,6),d=r(1,12);
-  qEl.textContent=`圓心距為 ${d}，半徑 ${r1}、${r1}，判斷相交狀況`;
+  qEl.textContent=`兩圓半徑皆為 ${r1}，圓心距 ${d}，判斷相交情形`;
   currentCheck=u=>true;
 }
 </script>
