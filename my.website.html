@@ -1,148 +1,50 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<title>數學出題器</title>
-<style>
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background: #f5f7fb;
-  display: flex;
-  justify-content: center;
-  padding: 40px;
+if (t === "exp") {
+  const templates = [
+
+    // A 同底指數
+    () => {
+      let a = rand(3,6), b = rand(1,3);
+      question.innerHTML = `化簡：<br> 2<sup>${a}</sup> ÷ 2<sup>${b}</sup>`;
+      correctValue = Math.pow(2, a-b);
+    },
+
+    // B 負指數
+    () => {
+      let a = rand(1,3);
+      question.innerHTML = `化簡：<br> 2<sup>-${a}</sup> × 4`;
+      correctValue = Math.pow(2, -a+2);
+    },
+
+    // C 不同底換底
+    () => {
+      let x = rand(2,5);
+      question.innerHTML = `化簡：<br> 8<sup>${x}</sup> ÷ 4<sup>${x-1}</sup>`;
+      correctValue = Math.pow(2, 3*x - 2*(x-1));
+    },
+
+    // D 根式 × 指數
+    () => {
+      let a = rand(3,6);
+      question.innerHTML = `化簡：<br> √(2<sup>${a}</sup>) × 2<sup>-1</sup>`;
+      correctValue = Math.pow(2, a/2 - 1);
+    },
+
+    // E 多層次根式
+    () => {
+      let a = rand(2,5);
+      question.innerHTML = `化簡：<br> √(a + √a)，其中 a = ${a}`;
+      correctValue = Math.sqrt(a + Math.sqrt(a));
+    },
+
+    // F 指數方程
+    () => {
+      let x = rand(1,4);
+      question.innerHTML = `解方程：<br> 2<sup>x+1</sup> = 8`;
+      correctValue = 2;
+    }
+
+  ];
+
+  const pick = templates[rand(0, templates.length-1)];
+  pick();
 }
-.container {
-  background: white;
-  padding: 30px;
-  border-radius: 16px;
-  width: 720px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.1);
-}
-h1 { font-size: 32px; margin-bottom: 20px; }
-select, input, button {
-  font-size: 20px;
-  padding: 10px;
-  margin-top: 10px;
-}
-button {
-  cursor: pointer;
-}
-.question {
-  font-size: 26px;
-  margin-top: 30px;
-}
-.feedback {
-  font-size: 22px;
-  margin-top: 10px;
-}
-.correct { color: green; }
-.wrong { color: red; }
-</style>
-</head>
-<body>
-
-<div class="container">
-  <h1>數學出題器</h1>
-
-  <label>選擇章節：</label><br>
-  <select id="topic">
-    <option value="exp">① 指數與根式</option>
-    <option value="log">② 對數</option>
-    <option value="poly">③ 多項式與函數</option>
-    <option value="ineq">④ 不等式</option>
-    <option value="word">⑤ 數學文字題</option>
-    <option value="geo">⑥ 幾何</option>
-  </select><br>
-
-  <button onclick="newQuestion()">開始出題</button>
-
-  <div class="question" id="question"></div>
-
-  <input id="answer" placeholder="輸入答案後按 Enter">
-
-  <div class="feedback" id="feedback"></div>
-</div>
-
-<script>
-let correctValue = null;
-
-function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-
-function parseAnswer(s){
-  s = s.trim();
-  if(s.includes("/")){
-    const [a,b]=s.split("/");
-    return Number(a)/Number(b);
-  }
-  return Number(s);
-}
-
-document.getElementById("answer").addEventListener("keydown",e=>{
-  if(e.key==="Enter") check();
-});
-
-function newQuestion(){
-  document.getElementById("feedback").textContent="";
-  document.getElementById("answer").value="";
-  const t = document.getElementById("topic").value;
-
-  if(t==="exp"){
-    let a = rand(2,4), b = rand(1,3);
-    document.getElementById("question").innerHTML =
-      `化簡：<br> (2<sup>${a}</sup>√8) ÷ (4<sup>${b}</sup>√2)`;
-    correctValue = (Math.pow(2,a)*Math.sqrt(8))/(Math.pow(4,b)*Math.sqrt(2));
-  }
-
-  if(t==="log"){
-    let k = rand(1,2);
-    document.getElementById("question").innerHTML =
-      `解方程：<br> log(x − 1) + log(x − ${k+1}) = 1`;
-    correctValue = 10 + 1 + k;
-  }
-
-  if(t==="poly"){
-    let a = rand(1,3);
-    document.getElementById("question").innerHTML =
-      `已知 f(x)=x³−${3*a}x²+ax−1，<br>若 x=1 為重根，求 a`;
-    correctValue = a;
-  }
-
-  if(t==="ineq"){
-    let c = rand(2,4);
-    document.getElementById("question").innerHTML =
-      `解不等式：<br>|2x−1| + |x+${c}| ≤ ${c*2+1}<br>（輸入最小解）`;
-    correctValue = -c;
-  }
-
-  if(t==="word"){
-    let a = rand(5,7);
-    document.getElementById("question").innerHTML =
-      `某數為 3<sup>${a}</sup>，<br>請問其十進位表示有幾位數？`;
-    correctValue = Math.floor(a*Math.log10(3))+1;
-  }
-
-  if(t==="geo"){
-    let r = rand(3,6);
-    document.getElementById("question").innerHTML =
-      `圓 x²+y²=${r*r} 與直線 y=2x+1，<br>判斷交點個數`;
-    correctValue = 2;
-  }
-}
-
-function check(){
-  const user = parseAnswer(document.getElementById("answer").value);
-  if(isNaN(user)) return;
-
-  if(Math.abs(user-correctValue)<1e-6){
-    document.getElementById("feedback").textContent="✔ 正確";
-    document.getElementById("feedback").className="feedback correct";
-    setTimeout(newQuestion,700);
-  }else{
-    document.getElementById("feedback").textContent="✘ 錯誤";
-    document.getElementById("feedback").className="feedback wrong";
-  }
-}
-</script>
-
-</body>
-</html>
