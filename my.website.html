@@ -1,50 +1,163 @@
-if (t === "exp") {
-  const templates = [
-
-    // A 同底指數
-    () => {
-      let a = rand(3,6), b = rand(1,3);
-      question.innerHTML = `化簡：<br> 2<sup>${a}</sup> ÷ 2<sup>${b}</sup>`;
-      correctValue = Math.pow(2, a-b);
-    },
-
-    // B 負指數
-    () => {
-      let a = rand(1,3);
-      question.innerHTML = `化簡：<br> 2<sup>-${a}</sup> × 4`;
-      correctValue = Math.pow(2, -a+2);
-    },
-
-    // C 不同底換底
-    () => {
-      let x = rand(2,5);
-      question.innerHTML = `化簡：<br> 8<sup>${x}</sup> ÷ 4<sup>${x-1}</sup>`;
-      correctValue = Math.pow(2, 3*x - 2*(x-1));
-    },
-
-    // D 根式 × 指數
-    () => {
-      let a = rand(3,6);
-      question.innerHTML = `化簡：<br> √(2<sup>${a}</sup>) × 2<sup>-1</sup>`;
-      correctValue = Math.pow(2, a/2 - 1);
-    },
-
-    // E 多層次根式
-    () => {
-      let a = rand(2,5);
-      question.innerHTML = `化簡：<br> √(a + √a)，其中 a = ${a}`;
-      correctValue = Math.sqrt(a + Math.sqrt(a));
-    },
-
-    // F 指數方程
-    () => {
-      let x = rand(1,4);
-      question.innerHTML = `解方程：<br> 2<sup>x+1</sup> = 8`;
-      correctValue = 2;
-    }
-
-  ];
-
-  const pick = templates[rand(0, templates.length-1)];
-  pick();
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>數學出題器</title>
+<style>
+body{
+  font-family: system-ui;
+  background:#eef2f7;
+  display:flex;
+  justify-content:center;
+  padding:40px;
 }
+.box{
+  background:white;
+  width:800px;
+  padding:30px;
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+h1{font-size:34px;margin-bottom:20px;}
+select,button,input{
+  font-size:22px;
+  padding:10px;
+  margin-top:10px;
+}
+button{cursor:pointer;}
+.q{
+  margin-top:30px;
+  font-size:28px;
+}
+.feedback{
+  margin-top:10px;
+  font-size:22px;
+}
+.ok{color:green;}
+.no{color:red;}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h1>數學出題器</h1>
+
+<select id="topic">
+<option value="exp">① 指數與根式</option>
+<option value="log">② 對數</option>
+<option value="poly">③ 多項式與函數</option>
+<option value="ineq">④ 不等式</option>
+<option value="word">⑤ 數學文字題</option>
+<option value="geo">⑥ 幾何（直線與圓）</option>
+</select><br>
+
+<button onclick="newQ()">開始出題</button>
+
+<div class="q" id="q"></div>
+<input id="ans" placeholder="輸入答案後按 Enter">
+<div class="feedback" id="fb"></div>
+</div>
+
+<script>
+let correct;
+
+function r(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function parse(s){
+  s=s.trim();
+  if(s.includes("/")){
+    let [a,b]=s.split("/");
+    return Number(a)/Number(b);
+  }
+  return Number(s);
+}
+
+document.getElementById("ans").addEventListener("keydown",e=>{
+  if(e.key==="Enter") check();
+});
+
+function newQ(){
+  document.getElementById("fb").textContent="";
+  document.getElementById("ans").value="";
+  const t=document.getElementById("topic").value;
+  const q=document.getElementById("q");
+
+  if(t==="exp"){
+    const pool=[
+      ()=>{let a=r(3,6),b=r(1,3);
+        q.innerHTML=`化簡：2<sup>${a}</sup> ÷ 2<sup>${b}</sup>`;
+        correct=Math.pow(2,a-b);},
+      ()=>{let a=r(1,3);
+        q.innerHTML=`化簡：2<sup>-${a}</sup> × 4`;
+        correct=Math.pow(2,-a+2);},
+      ()=>{let a=r(2,5);
+        q.innerHTML=`化簡：√(2<sup>${a}</sup>)`;
+        correct=Math.pow(2,a/2);},
+      ()=>{q.innerHTML=`化簡：√18 ÷ (2√2)`; correct=1.5;}
+    ];
+    pool[r(0,pool.length-1)]();
+  }
+
+  if(t==="log"){
+    const pool=[
+      ()=>{q.innerHTML=`解方程：log(x−1)+log(x−2)=1`; correct=13;},
+      ()=>{q.innerHTML=`求值：log₂8`; correct=3;}
+    ];
+    pool[r(0,pool.length-1)]();
+  }
+
+  if(t==="poly"){
+    const pool=[
+      ()=>{let a=r(1,3);
+        q.innerHTML=`若 x=1 為 f(x)=x³−${3*a}x²+ax−1 的重根，求 a`;
+        correct=a;},
+      ()=>{q.innerHTML=`求最大值：y=−x²+4x−1`; correct=3;}
+    ];
+    pool[r(0,pool.length-1)]();
+  }
+
+  if(t==="ineq"){
+    const pool=[
+      ()=>{q.innerHTML=`解 |x−2|≤3（輸入最小解）`; correct=-1;},
+      ()=>{q.innerHTML=`解 x²−4x−5≥0（輸入最小解）`; correct=-1;}
+    ];
+    pool[r(0,pool.length-1)]();
+  }
+
+  if(t==="word"){
+    const pool=[
+      ()=>{let a=r(5,7);
+        q.innerHTML=`3<sup>${a}</sup> 為幾位數？`;
+        correct=Math.floor(a*Math.log10(3))+1;},
+      ()=>{q.innerHTML=`2×10⁵ 與 5×10⁴ 何者大？(1或2)`; correct=1;}
+    ];
+    pool[r(0,pool.length-1)]();
+  }
+
+  if(t==="geo"){
+    const pool=[
+      ()=>{let r0=r(3,6);
+        q.innerHTML=`圓 x²+y²=${r0*r0} 與 y=2x+1 交點數`;
+        correct=2;},
+      ()=>{q.innerHTML=`點(3,4)到 x=0 的距離`; correct=3;}
+    ];
+    pool[r(0,pool.length-1)]();
+  }
+}
+
+function check(){
+  const u=parse(document.getElementById("ans").value);
+  if(isNaN(u))return;
+  const fb=document.getElementById("fb");
+  if(Math.abs(u-correct)<1e-6){
+    fb.textContent="✔ 正確";
+    fb.className="feedback ok";
+    setTimeout(newQ,700);
+  }else{
+    fb.textContent="✘ 錯誤";
+    fb.className="feedback no";
+  }
+}
+</script>
+
+</body>
+</html>
