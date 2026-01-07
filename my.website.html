@@ -1,84 +1,88 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8" />
-<title>數學出題器（高難度｜整數答案）</title>
-<style>
-  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI";background:#f3f4f6;padding:30px}
-  .card{max-width:900px;margin:auto;background:white;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
-  h1{font-size:28px;margin-bottom:16px}
-  button{font-size:20px;padding:12px 20px;border-radius:12px;border:0;cursor:pointer;background:#2563eb;color:white}
-  .q{font-size:22px;margin-top:24px;line-height:1.6}
-  input{font-size:20px;padding:8px;width:200px;margin-top:12px}
-  .feedback{margin-top:16px;font-size:20px;font-weight:700}
-</style>
-</head>
-<body>
-<div class="card">
-<h1>數學出題器（高難度｜答案皆為整數）</h1>
-<button onclick="newQuestion()">開始出題</button>
-<div class="q" id="question"></div>
-<input id="answer" placeholder="輸入答案後按 Enter" onkeydown="if(event.key==='Enter') check()" />
-<div class="feedback" id="fb"></div>
-</div>
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-<script>
-let currentAnswer=null;
+// 指數與根式已【完全刪除】
 
-function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+export default function MathQuizApp() {
+  const topics = [
+    "① 對數（進階）",
+    "② 多項式與函數",
+    "③ 不等式（含絕對值）",
+    "④ 函數比較與代入",
+    "⑤ 數學文字題（B 階段新版）",
+    "⑥ 幾何（直線、圓）"
+  ];
 
-function newQuestion(){
-  document.getElementById('fb').textContent='';
-  document.getElementById('answer').value='';
-  const type=rand(1,5);
+  const randomInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 
-  // 1 對數方程（保證整數解）
-  if(type===1){
-    const x=rand(1,5);
-    const a=rand(2,5);
-    const b=Math.pow(a,x);
-    currentAnswer=x;
-    question.innerHTML=`解方程式：log<sub>${a}</sub>(x+${b-1})=${x}`;
-  }
+  const genLog = () => {
+    const a = randomInt(2, 5);
+    const b = randomInt(2, 5);
+    return `已知 log_${a} ${a ** b}，求值。`;
+  };
 
-  // 2 二次函數最大值（整數）
-  if(type===2){
-    const h=rand(-5,5);
-    const k=rand(-10,10);
-    currentAnswer=k;
-    question.innerHTML=`設 f(x)=-(x-${h})²+${k}，求最大值`;
-  }
+  const genPoly = () => {
+    const x = randomInt(-3, 3);
+    return `已知 f(x)=x²−3x+2，求 f(${x})。`;
+  };
 
-  // 3 函數值比較（輸入 1 或 2）
-  if(type===3){
-    const a=rand(1,4),b=rand(0,5);
-    const f4=a*4*4-b*4;
-    const f5=a*5*5-b*5;
-    currentAnswer=f4>f5?1:2;
-    question.innerHTML=`比較 f(4) 與 f(5)，其中 f(x)=${a}x²-${b}x（輸入 1 或 2）`;
-  }
+  const genIneq = () => {
+    const a = randomInt(1, 5);
+    return `解不等式：|x−${a}|≤${randomInt(1, 4)}，求解集。`;
+  };
 
-  // 4 絕對值不等式（解的個數）
-  if(type===4){
-    const c=rand(1,5);
-    currentAnswer=2*c+1;
-    question.innerHTML=`解不等式：|x-3|≤${c}，求整數解的個數`;
-  }
+  const genCompare = () => {
+    return `比較 f(4) 與 f(5)，其中 f(x)=x²−3x（輸入 1 或 2）。`;
+  };
 
-  // 5 幾何：圓心距判斷（輸入 1=相交 2=相離 3=相切）
-  if(type===5){
-    const d=rand(1,10);
-    const r1=rand(1,5),r2=rand(1,5);
-    currentAnswer=d<r1+r2?1:(d===r1+r2?3:2);
-    question.innerHTML=`兩圓圓心距為 ${d}，半徑分別為 ${r1}, ${r2}，判斷關係（1 相交 2 相離 3 相切）`;
-  }
+  const genWord = () => {
+    return `某數增加 20% 後為 120，求原數。`;
+  };
+
+  const genGeo = () => {
+    const r = randomInt(3, 8);
+    return `圓心在原點、半徑為 ${r} 的圓，求圓的方程式。`;
+  };
+
+  const generators = [
+    genLog,
+    genPoly,
+    genIneq,
+    genCompare,
+    genWord,
+    genGeo
+  ];
+
+  const [topic, setTopic] = useState("");
+  const [question, setQuestion] = useState("");
+
+  const startQuiz = () => {
+    const i = randomInt(0, topics.length - 1);
+    setTopic(topics[i]);
+    setQuestion(generators[i]());
+  };
+
+  return (
+    <div className="w-full min-h-screen flex justify-center items-start p-6 bg-gray-100">
+      <Card className="w-full max-w-2xl p-6 rounded-2xl shadow-lg">
+        <CardContent>
+          <h1 className="text-3xl font-bold mb-4">數學出題器（最終版）</h1>
+
+          <Button className="text-lg px-6 py-4 rounded-2xl" onClick={startQuiz}>
+            開始出題
+          </Button>
+
+          {topic && (
+            <div className="mt-6 text-xl">
+              <p className="font-semibold">主題：</p>
+              <p className="mb-4">{topic}</p>
+              <p className="font-semibold">題目：</p>
+              <p>{question}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
-
-function check(){
-  const v=document.getElementById('answer').value.trim();
-  if(v==='')return;
-  document.getElementById('fb').textContent = (Number(v)===currentAnswer)?'✔ 正確':'✘ 錯誤，正確答案是 '+currentAnswer;
-}
-</script>
-</body>
-</html>
